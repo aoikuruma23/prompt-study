@@ -49,8 +49,8 @@ def index():
     </ul>
     """
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
+@app.route('/callback', methods=['POST'])
+def callback():
     """LINE Webhookエンドポイント"""
     if line_bot_handler is None:
         abort(500)
@@ -150,6 +150,6 @@ if __name__ == '__main__':
     
     print(f"🚀 アプリケーションを開始します (ポート: {port})")
     print(f"🌐 ローカルURL: http://localhost:{port}")
-    print(f"📱 LINE Webhook URL: http://localhost:{port}/webhook")
+    print(f"📱 LINE Webhook URL: http://localhost:{port}/callback")
     
     app.run(host='0.0.0.0', port=port, debug=debug) 
