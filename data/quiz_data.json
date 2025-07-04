@@ -1,0 +1,135 @@
+{
+  "beginner_quiz": [
+    {
+      "id": "bq001",
+      "question": "プロンプトの基本構造で最も重要な3つの要素は何ですか？",
+      "options": [
+        "指示・文脈・制約",
+        "質問・回答・評価",
+        "入力・処理・出力",
+        "開始・中間・終了"
+      ],
+      "correct_answer": 0,
+      "explanation": "プロンプトは「指示（何をしてほしいか）」「文脈（背景情報）」「制約（出力形式や制限）」の3つの要素で構成されます。",
+      "level": "beginner",
+      "tags": ["基本構造"]
+    },
+    {
+      "id": "bq002",
+      "question": "AIの出力を制御する際に使わないのはどれですか？",
+      "options": [
+        "文字数制限",
+        "形式指定",
+        "感情指定",
+        "ランダム指定"
+      ],
+      "correct_answer": 3,
+      "explanation": "ランダム指定は出力制御には適しません。文字数制限、形式指定、感情指定は有効な制御方法です。",
+      "level": "beginner",
+      "tags": ["出力制御"]
+    },
+    {
+      "id": "bq003",
+      "question": "複雑な指示を伝える際のベストプラクティスは？",
+      "options": [
+        "一度に全ての指示を伝える",
+        "段階に分けて指示する",
+        "曖昧な表現を使う",
+        "専門用語を多用する"
+      ],
+      "correct_answer": 1,
+      "explanation": "複雑な指示は段階に分けて伝えることで、AIが理解しやすくなり、期待通りの結果が得られます。",
+      "level": "beginner",
+      "tags": ["命令分離"]
+    }
+  ],
+  "intermediate_quiz": [
+    {
+      "id": "iq001",
+      "question": "Few-shot Learningで重要なのは？",
+      "options": [
+        "多くの例を示すこと",
+        "例の質と一貫性",
+        "短い例を使うこと",
+        "ランダムな例を使うこと"
+      ],
+      "correct_answer": 1,
+      "explanation": "Few-shot Learningでは、例の質と一貫性が重要です。期待する出力形式を明確に示すことがポイントです。",
+      "level": "intermediate",
+      "tags": ["Few-shot Learning"]
+    },
+    {
+      "id": "iq002",
+      "question": "ロール演技（Role Playing）の効果的な活用方法は？",
+      "options": [
+        "常に同じ役割を使う",
+        "状況に応じて適切な役割を選択する",
+        "複数の役割を同時に演じさせる",
+        "役割を頻繁に変更する"
+      ],
+      "correct_answer": 1,
+      "explanation": "状況に応じて適切な役割を選択することで、より専門的で有用な回答が得られます。",
+      "level": "intermediate",
+      "tags": ["ロール演技"]
+    },
+    {
+      "id": "iq003",
+      "question": "制約指定で「禁止事項」を明記する目的は？",
+      "options": [
+        "AIの機能を制限する",
+        "望ましくない出力を避ける",
+        "処理速度を上げる",
+        "コストを削減する"
+      ],
+      "correct_answer": 1,
+      "explanation": "禁止事項を明記することで、望ましくない出力を避け、期待する結果に近づけることができます。",
+      "level": "intermediate",
+      "tags": ["制約指定"]
+    }
+  ],
+  "advanced_quiz": [
+    {
+      "id": "aq001",
+      "question": "Chain of Thought（思考の連鎖）の主な利点は？",
+      "options": [
+        "回答速度の向上",
+        "論理的思考過程の可視化",
+        "コストの削減",
+        "文字数の削減"
+      ],
+      "correct_answer": 1,
+      "explanation": "Chain of Thoughtにより、AIの論理的思考過程が可視化され、より信頼性の高い回答が得られます。",
+      "level": "advanced",
+      "tags": ["Chain of Thought"]
+    },
+    {
+      "id": "aq002",
+      "question": "メタプロンプトの主な用途は？",
+      "instructions": "プロンプト自体の改善",
+      "options": [
+        "プロンプト自体の改善",
+        "回答の検証",
+        "コストの計算",
+        "速度の測定"
+      ],
+      "correct_answer": 0,
+      "explanation": "メタプロンプトは、プロンプト自体を改善するためのテクニックです。より効果的な指示を作成するのに役立ちます。",
+      "level": "advanced",
+      "tags": ["メタプロンプト"]
+    },
+    {
+      "id": "aq003",
+      "question": "逆プロンプト設計で最も重要なのは？",
+      "options": [
+        "多くの禁止事項を列挙する",
+        "具体的で明確な禁止事項を設定する",
+        "曖昧な表現を使う",
+        "禁止事項を最小限にする"
+      ],
+      "correct_answer": 1,
+      "explanation": "逆プロンプトでは、具体的で明確な禁止事項を設定することで、望ましくない出力を効果的に避けることができます。",
+      "level": "advanced",
+      "tags": ["逆プロンプト"]
+    }
+  ]
+} 
