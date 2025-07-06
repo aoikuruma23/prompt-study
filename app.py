@@ -149,6 +149,67 @@ def stop_scheduler():
     except Exception as e:
         return f"❌ スケジューラーの停止に失敗しました: {e}"
 
+@app.route('/scheduler/status')
+def scheduler_status():
+    """スケジューラーの詳細ステータスを表示"""
+    try:
+        next_tasks = scheduler.get_next_scheduled_tasks()
+        active_users = scheduler.get_active_users()
+        
+        status_html = """
+        <h1>📊 スケジューラー詳細ステータス</h1>
+        <h2>📅 スケジュール</h2>
+        <ul>
+        """
+        
+        for task in next_tasks:
+            status_html += f"<li>{task['function']}: {task['next_run']}</li>"
+        
+        status_html += f"""
+        </ul>
+        <h2>👥 アクティブユーザー</h2>
+        <p>ユーザー数: {len(active_users)}</p>
+        <ul>
+        """
+        
+        for user_id in active_users:
+            status_html += f"<li>{user_id}</li>"
+        
+        status_html += """
+        </ul>
+        <h2>🔧 管理機能</h2>
+        <ul>
+            <li><a href="/scheduler/test/04:30">04:30のジョブを手動実行</a></li>
+            <li><a href="/scheduler/restart">スケジューラーを再起動</a></li>
+        </ul>
+        """
+        
+        return status_html
+    except Exception as e:
+        return f"❌ エラー: {e}"
+
+@app.route('/scheduler/test/<time>')
+def test_scheduler_job(time):
+    """指定時刻のジョブを手動実行"""
+    try:
+        if time == "04:30":
+            scheduler.send_evening_lesson()
+            return "✅ 04:30のジョブを手動実行しました"
+        else:
+            return f"❌ 未対応の時刻: {time}"
+    except Exception as e:
+        return f"❌ エラー: {e}"
+
+@app.route('/scheduler/restart')
+def restart_scheduler():
+    """スケジューラーを再起動"""
+    try:
+        scheduler.stop()
+        scheduler.start()
+        return "✅ スケジューラーを再起動しました"
+    except Exception as e:
+        return f"❌ エラー: {e}"
+
 if __name__ == '__main__':
     # Flaskアプリケーションを開始
     port = int(os.getenv('PORT', 5000))

@@ -35,23 +35,37 @@ class LearningScheduler:
         
         self.running = True
         
-        print("📅 スケジュール設定完了:")
-        print("   - 毎日 10:00, 15:00, 20:00: 学習メッセージ")
-        print("   - 日曜 20:00: 週間クイズ")
-        print("   - 土曜 21:00: 週間サマリー")
-        print("   - 水曜 19:00: 復習リマインダー")
-        print("   - テスト用: 毎日 04:30: 夜の学習メッセージ")
+        # スケジュール設定の確認
+        print(f"📅 スケジュール設定完了:")
+        print(f"   - 毎日 10:00, 15:00, 20:00: 学習メッセージ")
+        print(f"   - 日曜 20:00: 週間クイズ")
+        print(f"   - 土曜 21:00: 週間サマリー")
+        print(f"   - 水曜 19:00: 復習リマインダー")
+        print(f"   - テスト用: 毎日 04:30: 夜の学習メッセージ")
+        
+        # 現在のスケジュールを確認
+        print(f"📋 現在のスケジュール:")
+        for job in schedule.jobs:
+            print(f"   - {job.job_func.__name__}: {job.next_run}")
     
     def run_scheduler(self):
         """スケジューラーを実行"""
         print("🔄 スケジューラーループを開始しました")
+        loop_count = 0
         while self.running:
             try:
+                loop_count += 1
+                if loop_count % 10 == 0:  # 10分ごとにループカウントを表示
+                    print(f"🔄 スケジューラーループ実行中... (ループ {loop_count})")
+                
                 schedule.run_pending()
                 # デバッグ用：現在時刻と次のジョブをログ出力
                 if schedule.jobs:
                     next_job = min(schedule.jobs, key=lambda x: x.next_run)
                     print(f"⏰ 現在時刻: {datetime.now()}, 次のジョブ: {next_job.job_func.__name__} at {next_job.next_run}")
+                else:
+                    print(f"⚠️ スケジュールされたジョブがありません")
+                
                 time.sleep(60)  # 1分ごとにチェック
             except Exception as e:
                 print(f"❌ スケジューラーエラー: {e}")
