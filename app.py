@@ -22,6 +22,18 @@ except Exception as e:
 # スケジューラーを初期化
 scheduler = LearningScheduler()
 
+# スケジューラーをバックグラウンドで起動
+def start_scheduler_in_background():
+    try:
+        scheduler.start()
+    except Exception as e:
+        print(f"❌ スケジューラーの開始に失敗しました: {e}")
+
+# Flaskアプリ起動時にスケジューラーを自動起動
+scheduler_thread = threading.Thread(target=start_scheduler_in_background)
+scheduler_thread.daemon = True
+scheduler_thread.start()
+
 @app.route('/')
 def index():
     """ホームページ"""
@@ -131,19 +143,7 @@ def stop_scheduler():
     except Exception as e:
         return f"❌ スケジューラーの停止に失敗しました: {e}"
 
-def start_scheduler_in_background():
-    """バックグラウンドでスケジューラーを開始"""
-    try:
-        scheduler.start()
-    except Exception as e:
-        print(f"❌ スケジューラーの開始に失敗しました: {e}")
-
 if __name__ == '__main__':
-    # バックグラウンドでスケジューラーを開始
-    scheduler_thread = threading.Thread(target=start_scheduler_in_background)
-    scheduler_thread.daemon = True
-    scheduler_thread.start()
-    
     # Flaskアプリケーションを開始
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
