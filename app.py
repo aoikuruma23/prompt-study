@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from line_bot import LineBotHandler
 from scheduler import LearningScheduler
 import threading
+import sys
 
 # 環境変数を読み込み
 load_dotenv()
@@ -69,20 +70,19 @@ def index():
 
 @app.route('/callback', methods=['POST'])
 def callback():
-    """LINE Webhookエンドポイント"""
+    print("==> /callback受信", file=sys.stderr, flush=True)
     if line_bot_handler is None:
+        print("line_bot_handler is None!", flush=True)
         abort(500)
-    
-    # リクエストボディを取得
     body = request.get_data(as_text=True)
-    
-    # 署名を取得
     signature = request.headers.get('X-Line-Signature', '')
-    
-    # Webhookを処理
+    print(f"body: {body}", flush=True)
+    print(f"signature: {signature}", flush=True)
     if line_bot_handler.handle_webhook(body, signature):
+        print("Webhook処理成功", flush=True)
         return 'OK'
     else:
+        print("Webhook処理失敗", flush=True)
         abort(400)
 
 @app.route('/test/lesson/<user_id>')
