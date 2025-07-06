@@ -68,7 +68,10 @@ class LineBotHandler:
         
         # ユーザーが存在しない場合は追加
         if not self.db.get_user_level(user_id):
+            print(f"新規ユーザー検出: {user_id}")
             self.db.add_user(user_id)
+        else:
+            print(f"既存ユーザー: {user_id}")
         
         # コマンド処理
         response = self.process_command(user_id, message_text)

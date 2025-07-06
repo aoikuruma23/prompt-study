@@ -91,6 +91,7 @@ class LearningDatabase:
             cursor = conn.cursor()
             cursor.execute('SELECT user_id FROM users')
             results = cursor.fetchall()
+            print(f"get_all_users: {results}")
             return [row[0] for row in results]
     
     def update_user_level(self, user_id, new_level):
