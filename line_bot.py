@@ -46,6 +46,9 @@ class LineBotHandler:
         
         # イベントハンドラーを設定
         self.setup_handlers()
+        
+        print(f"LINE_CHANNEL_ACCESS_TOKEN: {self.channel_access_token}")
+        print(f"LINE_CHANNEL_SECRET: {self.channel_secret}")
     
     def setup_handlers(self):
         """イベントハンドラーを設定"""
@@ -233,6 +236,7 @@ class LineBotHandler:
             print("📱 [テストモード] Webhook処理: LINE Bot機能は無効化されています")
             return True
         try:
+            print("Webhook受信: body=", body)
             self.handler.handle(body, signature)
         except InvalidSignatureError:
             print("Invalid signature")
