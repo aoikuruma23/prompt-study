@@ -22,7 +22,7 @@ class LearningScheduler:
         # 毎日の学習メッセージ（10時、15時、20時）
         schedule.every().day.at("10:00").do(self.send_morning_lesson)
         schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
-        schedule.every().day.at("02:30").do(self.send_evening_lesson)
+        schedule.every().day.at("03:30").do(self.send_evening_lesson)
         
         # 週間クイズ（日曜20時）
         schedule.every().sunday.at("20:00").do(self.send_weekly_quiz)
@@ -40,7 +40,7 @@ class LearningScheduler:
         print("   - 日曜 20:00: 週間クイズ")
         print("   - 土曜 21:00: 週間サマリー")
         print("   - 水曜 19:00: 復習リマインダー")
-        print("   - テスト用: 毎日 02:30: 夜の学習メッセージ")
+        print("   - テスト用: 毎日 03:30: 夜の学習メッセージ")
     
     def run_scheduler(self):
         """スケジューラーを実行"""
