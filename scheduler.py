@@ -22,7 +22,7 @@ class LearningScheduler:
         # 毎日の学習メッセージ（10時、15時、20時）
         schedule.every().day.at("10:00").do(self.send_morning_lesson)
         schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
-        schedule.every().day.at("20:00").do(self.send_evening_lesson)
+        schedule.every().day.at("02:30").do(self.send_evening_lesson)
         
         # 週間クイズ（日曜20時）
         schedule.every().sunday.at("20:00").do(self.send_weekly_quiz)
@@ -181,7 +181,7 @@ class LearningScheduler:
                 return [line.strip() for line in f if line.strip()]
         except:
             # テスト用のダミーユーザーID
-            return ["test_user_1", "test_user_2"]
+            return ["yukihiro3333", "test_user_2"]
     
     def manual_send_lesson(self, user_id):
         """手動でレッスンを送信（テスト用）"""
