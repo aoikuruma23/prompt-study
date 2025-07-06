@@ -25,14 +25,20 @@ scheduler = LearningScheduler()
 # スケジューラーをバックグラウンドで起動
 def start_scheduler_in_background():
     try:
+        print("🚀 バックグラウンドでスケジューラーを起動中...")
         scheduler.start()
+        print("✅ スケジューラーの起動が完了しました")
+        # スケジューラーループを開始
+        scheduler.run_scheduler()
     except Exception as e:
         print(f"❌ スケジューラーの開始に失敗しました: {e}")
 
 # Flaskアプリ起動時にスケジューラーを自動起動
+print("🔄 スケジューラースレッドを開始中...")
 scheduler_thread = threading.Thread(target=start_scheduler_in_background)
 scheduler_thread.daemon = True
 scheduler_thread.start()
+print("✅ スケジューラースレッドを開始しました")
 
 @app.route('/')
 def index():

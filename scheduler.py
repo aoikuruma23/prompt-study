@@ -35,22 +35,27 @@ class LearningScheduler:
         
         self.running = True
         
-        # スケジューラーをバックグラウンドで実行
-        scheduler_thread = threading.Thread(target=self.run_scheduler)
-        scheduler_thread.daemon = True
-        scheduler_thread.start()
-        
         print("📅 スケジュール設定完了:")
         print("   - 毎日 10:00, 15:00, 20:00: 学習メッセージ")
         print("   - 日曜 20:00: 週間クイズ")
         print("   - 土曜 21:00: 週間サマリー")
         print("   - 水曜 19:00: 復習リマインダー")
+        print("   - テスト用: 毎日 02:30: 夜の学習メッセージ")
     
     def run_scheduler(self):
         """スケジューラーを実行"""
+        print("🔄 スケジューラーループを開始しました")
         while self.running:
-            schedule.run_pending()
-            time.sleep(60)  # 1分ごとにチェック
+            try:
+                schedule.run_pending()
+                # デバッグ用：現在時刻と次のジョブをログ出力
+                if schedule.jobs:
+                    next_job = min(schedule.jobs, key=lambda x: x.next_run)
+                    print(f"⏰ 現在時刻: {datetime.now()}, 次のジョブ: {next_job.job_func.__name__} at {next_job.next_run}")
+                time.sleep(60)  # 1分ごとにチェック
+            except Exception as e:
+                print(f"❌ スケジューラーエラー: {e}")
+                time.sleep(60)
     
     def stop(self):
         """スケジューラーを停止"""
@@ -60,16 +65,19 @@ class LearningScheduler:
     def send_morning_lesson(self):
         """朝の学習メッセージを送信"""
         print(f"🌅 朝の学習メッセージを送信中... ({datetime.now()})")
+        print(f"🌅 アクティブユーザー数: {len(self.get_active_users())}")
         self.send_daily_lesson_to_all_users("🌅 おはようございます！今日もプロンプトエンジニアリングを学びましょう！")
     
     def send_afternoon_lesson(self):
         """午後の学習メッセージを送信"""
         print(f"☀️ 午後の学習メッセージを送信中... ({datetime.now()})")
+        print(f"☀️ アクティブユーザー数: {len(self.get_active_users())}")
         self.send_daily_lesson_to_all_users("☀️ 午後の学習時間です！集中してスキルアップしましょう！")
     
     def send_evening_lesson(self):
         """夜の学習メッセージを送信"""
         print(f"🌙 夜の学習メッセージを送信中... ({datetime.now()})")
+        print(f"🌙 アクティブユーザー数: {len(self.get_active_users())}")
         self.send_daily_lesson_to_all_users("🌙 夜の学習時間です！今日の復習をしましょう！")
     
     def send_weekly_quiz(self):
@@ -177,11 +185,16 @@ class LearningScheduler:
         # 実際の実装では、データベースからアクティブユーザーを取得
         # ここでは簡略化のため、テスト用のユーザーIDを返す
         try:
-            with self.db.db_path.replace('.db', '_users.txt') as f:
-                return [line.strip() for line in f if line.strip()]
-        except:
+            with open(self.db.db_path.replace('.db', '_users.txt'), 'r') as f:
+                users = [line.strip() for line in f if line.strip()]
+                print(f"📋 ファイルから読み込んだユーザー: {users}")
+                return users
+        except Exception as e:
+            print(f"⚠️ ユーザーファイル読み込みエラー: {e}")
             # テスト用のダミーユーザーID
-            return ["yukihiro3333", "test_user_2"]
+            users = ["yukihiro3333", "test_user_2"]
+            print(f"📋 デフォルトユーザーを使用: {users}")
+            return users
     
     def manual_send_lesson(self, user_id):
         """手動でレッスンを送信（テスト用）"""
