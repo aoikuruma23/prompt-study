@@ -63,6 +63,9 @@ class LineBotHandler:
         user_id = event.source.user_id
         message_text = event.message.text
         
+        # ユーザーIDをログ出力（デバッグ用）
+        print(f"📱 メッセージ受信 - ユーザーID: {user_id}, メッセージ: {message_text}")
+        
         # ユーザーが存在しない場合は追加
         if not self.db.get_user_level(user_id):
             self.db.add_user(user_id)

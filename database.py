@@ -85,6 +85,14 @@ class LearningDatabase:
             result = cursor.fetchone()
             return result[0] if result else "beginner"
     
+    def get_all_users(self):
+        """全ユーザーIDを取得"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT user_id FROM users')
+            results = cursor.fetchall()
+            return [row[0] for row in results]
+    
     def update_user_level(self, user_id, new_level):
         """ユーザーのレベルを更新"""
         with sqlite3.connect(self.db_path) as conn:
