@@ -5,6 +5,7 @@ from line_bot import LineBotHandler
 from scheduler import LearningScheduler
 import threading
 import sys
+from database import LearningDatabase
 
 # 環境変数を読み込み
 load_dotenv()
@@ -152,6 +153,7 @@ def stop_scheduler():
 @app.route('/scheduler/status')
 def scheduler_status():
     """スケジューラーの詳細ステータスを表示"""
+    db = LearningDatabase()  # ここで必ずインスタンス化
     try:
         next_tasks = scheduler.get_next_scheduled_tasks()
         active_users = scheduler.get_active_users()
@@ -183,6 +185,9 @@ def scheduler_status():
             <li><a href="/scheduler/restart">スケジューラーを再起動</a></li>
         </ul>
         """
+        
+        users = db.get_all_users()
+        print(f"get_all_users返り値: {users}", flush=True)
         
         return status_html
     except Exception as e:
