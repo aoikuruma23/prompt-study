@@ -41,6 +41,7 @@ class LineBotHandler:
         
         # 各マネージャーを初期化
         self.db = LearningDatabase()
+        print(f"DBパス: {self.db.db_path}", flush=True)
         self.learning_manager = LearningContentManager()
         self.quiz_manager = QuizManager()
         

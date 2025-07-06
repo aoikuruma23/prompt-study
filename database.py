@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 import os
 
 class LearningDatabase:
-    def __init__(self, db_path="database/learning.db"):
+    def __init__(self, db_path=None):
+        if db_path is None:
+            db_path = os.path.abspath("database/learning.db")
         self.db_path = db_path
         print(f"DBパス: {self.db_path}", flush=True)
         self.init_database()

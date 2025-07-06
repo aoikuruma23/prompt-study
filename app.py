@@ -71,6 +71,7 @@ def index():
 
 @app.route('/callback', methods=['POST'])
 def callback():
+    db = LearningDatabase()  # ここで必ずインスタンス化
     print("==> /callback受信", file=sys.stderr, flush=True)
     if line_bot_handler is None:
         print("line_bot_handler is None!", flush=True)
