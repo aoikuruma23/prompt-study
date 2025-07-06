@@ -6,6 +6,7 @@ import os
 class LearningDatabase:
     def __init__(self, db_path="database/learning.db"):
         self.db_path = db_path
+        print(f"DBパス: {self.db_path}", flush=True)
         self.init_database()
     
     def init_database(self):
