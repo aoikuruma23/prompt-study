@@ -6,6 +6,7 @@ from line_bot import LineBotHandler
 from database import LearningDatabase
 from learning_content import LearningContentManager
 from quiz_manager import QuizManager
+import sqlite3
 
 class LearningScheduler:
     def __init__(self):
@@ -244,4 +245,11 @@ class LearningScheduler:
                 'next_run': job.next_run,
                 'interval': str(job.interval)
             })
-        return next_tasks 
+        return next_tasks
+
+    def get_user_level(self, user_id):
+        with sqlite3.connect(self.db.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT level FROM users WHERE user_id = ?', (user_id,))
+            result = cursor.fetchone()
+            return result[0] if result else None 
