@@ -23,7 +23,7 @@ class LearningScheduler:
         # 毎日の学習メッセージ（10時、15時、20時）
         schedule.every().day.at("10:00").do(self.send_morning_lesson)
         schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
-        schedule.every().day.at("16:30").do(self.send_evening_lesson)
+        schedule.every().day.at("19:20").do(self.send_evening_lesson)
         
         # 週間クイズ（日曜20時）
         schedule.every().sunday.at("20:00").do(self.send_weekly_quiz)
@@ -42,7 +42,7 @@ class LearningScheduler:
         print(f"   - 日曜 20:00: 週間クイズ")
         print(f"   - 土曜 21:00: 週間サマリー")
         print(f"   - 水曜 19:00: 復習リマインダー")
-        print(f"   - テスト用: 毎日 16:30: 夜の学習メッセージ")
+        print(f"   - テスト用: 毎日 19:20: 夜の学習メッセージ")
         
         # 現在のスケジュールを確認
         print(f"📋 現在のスケジュール:")
