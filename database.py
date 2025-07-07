@@ -7,8 +7,10 @@ class LearningDatabase:
     def __init__(self, db_path=None):
         if db_path is None:
             db_path = os.path.abspath("database/learning.db")
+        print("LearningDatabaseインスタンス化直前", flush=True)
         self.db_path = db_path
         print(f"DBパス: {self.db_path}", flush=True)
+        print("LearningDatabaseインスタンス化直後", flush=True)
         self.init_database()
     
     def init_database(self):
