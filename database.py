@@ -88,7 +88,7 @@ class LearningDatabase:
             cursor = conn.cursor()
             cursor.execute('SELECT level FROM users WHERE user_id = ?', (user_id,))
             result = cursor.fetchone()
-            return result[0] if result else "beginner"
+            return result[0] if result else None
     
     def get_all_users(self):
         """全ユーザーIDを取得"""
