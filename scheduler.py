@@ -23,7 +23,7 @@ class LearningScheduler:
         # 毎日の学習メッセージ（10時、15時、20時）
         schedule.every().day.at("10:00").do(self.send_morning_lesson)
         schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
-        schedule.every().day.at("19:15").do(self.send_evening_lesson)
+        schedule.every().day.at("19:40").do(self.send_evening_lesson)
         
         # 週間クイズ（日曜20時）
         schedule.every().sunday.at("20:00").do(self.send_weekly_quiz)
