@@ -22,9 +22,18 @@ class LearningContentManager:
                     # lesson_idを追加（lessonフィールドから生成）
                     if 'lesson' in lesson:
                         lesson['id'] = lesson['lesson']
-                    # contentフィールドを追加（pointフィールドを使用）
+                    elif 'lesson_number' in lesson:
+                        lesson['id'] = lesson['lesson_number']
+                        lesson['lesson'] = lesson['lesson_number']
+                    
+                    # contentフィールドを追加（point、description、summaryフィールドを使用）
                     if 'point' in lesson:
                         lesson['content'] = lesson['point']
+                    elif 'description' in lesson:
+                        lesson['content'] = lesson['description']
+                    elif 'summary' in lesson:
+                        lesson['content'] = lesson['summary']
+                    
                     # levelフィールドを追加
                     lesson['level'] = 'beginner'
                     
@@ -41,7 +50,9 @@ class LearningContentManager:
         """IDでレッスンを取得"""
         for level in self.learning_data.values():
             for lesson in level:
-                if lesson.get('id') == lesson_id or lesson.get('lesson') == lesson_id:
+                if (lesson.get('id') == lesson_id or 
+                    lesson.get('lesson') == lesson_id or 
+                    lesson.get('lesson_number') == lesson_id):
                     return lesson
         return None
     
@@ -52,7 +63,9 @@ class LearningContentManager:
         
         available_lessons = [
             lesson for lesson in self.learning_data.get(level, [])
-            if lesson.get('id') not in exclude_ids and lesson.get('lesson') not in exclude_ids
+            if (lesson.get('id') not in exclude_ids and 
+                lesson.get('lesson') not in exclude_ids and
+                lesson.get('lesson_number') not in exclude_ids)
         ]
         
         if not available_lessons:
@@ -89,9 +102,13 @@ class LearningContentManager:
         
         message = f"📚 {lesson['title']}\n\n"
         
-        # pointフィールドを使用
+        # point、description、summaryフィールドを使用
         if 'point' in lesson:
             message += lesson['point']
+        elif 'description' in lesson:
+            message += lesson['description']
+        elif 'summary' in lesson:
+            message += lesson['summary']
         elif 'content' in lesson:
             message += lesson['content']
         else:
@@ -122,7 +139,7 @@ class LearningContentManager:
             line_bot.push_message(user_id, message)
             
             # データベースに記録
-            lesson_id = lesson.get('id') or lesson.get('lesson')
+            lesson_id = lesson.get('id') or lesson.get('lesson') or lesson.get('lesson_number')
             self.db.record_lesson_sent(user_id, lesson_id, lesson.get('level', 'beginner'))
             
             return True
