@@ -13,16 +13,35 @@ class LearningContentManager:
         """学習データを読み込み"""
         try:
             with open(self.learning_data_path, 'r', encoding='utf-8') as f:
-                self.learning_data = json.load(f)
+                raw_data = json.load(f)
+                # 配列形式のデータをレベル別に分類
+                self.learning_data = {"beginner": [], "intermediate": [], "advanced": []}
+                
+                # すべてのレッスンをbeginnerレベルとして分類（簡易対応）
+                for lesson in raw_data:
+                    # lesson_idを追加（lessonフィールドから生成）
+                    if 'lesson' in lesson:
+                        lesson['id'] = lesson['lesson']
+                    # contentフィールドを追加（pointフィールドを使用）
+                    if 'point' in lesson:
+                        lesson['content'] = lesson['point']
+                    # levelフィールドを追加
+                    lesson['level'] = 'beginner'
+                    
+                    self.learning_data['beginner'].append(lesson)
+                    
         except FileNotFoundError:
             print(f"学習データファイルが見つかりません: {self.learning_data_path}")
+            self.learning_data = {"beginner": [], "intermediate": [], "advanced": []}
+        except Exception as e:
+            print(f"学習データ読み込みエラー: {e}")
             self.learning_data = {"beginner": [], "intermediate": [], "advanced": []}
     
     def get_lesson_by_id(self, lesson_id):
         """IDでレッスンを取得"""
         for level in self.learning_data.values():
             for lesson in level:
-                if lesson['id'] == lesson_id:
+                if lesson.get('id') == lesson_id or lesson.get('lesson') == lesson_id:
                     return lesson
         return None
     
@@ -33,7 +52,7 @@ class LearningContentManager:
         
         available_lessons = [
             lesson for lesson in self.learning_data.get(level, [])
-            if lesson['id'] not in exclude_ids
+            if lesson.get('id') not in exclude_ids and lesson.get('lesson') not in exclude_ids
         ]
         
         if not available_lessons:
@@ -69,8 +88,24 @@ class LearningContentManager:
             return "今日の学習コンテンツを準備中です..."
         
         message = f"📚 {lesson['title']}\n\n"
-        message += lesson['content']
-        message += f"\n\n🏷️ タグ: {', '.join(lesson['tags'])}"
+        
+        # pointフィールドを使用
+        if 'point' in lesson:
+            message += lesson['point']
+        elif 'content' in lesson:
+            message += lesson['content']
+        else:
+            message += "学習コンテンツの詳細がありません。"
+        
+        # 例文があれば追加
+        if 'examples' in lesson and lesson['examples']:
+            message += "\n\n📝 例文:\n"
+            for i, example in enumerate(lesson['examples'][:3], 1):  # 最大3つまで
+                message += f"{i}. {example}\n"
+        
+        # タグがあれば追加
+        if 'tags' in lesson and lesson['tags']:
+            message += f"\n🏷️ タグ: {', '.join(lesson['tags'])}"
         
         return message
     
@@ -87,7 +122,8 @@ class LearningContentManager:
             line_bot.push_message(user_id, message)
             
             # データベースに記録
-            self.db.record_lesson_sent(user_id, lesson['id'], lesson.get('level', 'beginner'))
+            lesson_id = lesson.get('id') or lesson.get('lesson')
+            self.db.record_lesson_sent(user_id, lesson_id, lesson.get('level', 'beginner'))
             
             return True
         except Exception as e:
