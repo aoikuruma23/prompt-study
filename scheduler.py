@@ -53,24 +53,39 @@ class LearningScheduler:
         """スケジューラーを実行"""
         print("🔄 スケジューラーループを開始しました")
         loop_count = 0
+        last_heartbeat = datetime.now()
+        
         while self.running:
             try:
                 loop_count += 1
-                if loop_count % 10 == 0:  # 10分ごとにループカウントを表示
+                current_time = datetime.now()
+                
+                # 10分ごとにハートビートログ
+                if (current_time - last_heartbeat).seconds >= 600:
+                    print(f"💓 スケジューラーハートビート: {current_time} (ループ {loop_count})")
+                    last_heartbeat = current_time
+                
+                # 60分ごとに詳細ログ
+                if loop_count % 60 == 0:
                     print(f"🔄 スケジューラーループ実行中... (ループ {loop_count})")
                 
                 schedule.run_pending()
+                
                 # デバッグ用：現在時刻と次のジョブをログ出力
                 if schedule.jobs:
                     next_job = min(schedule.jobs, key=lambda x: x.next_run)
-                    print(f"⏰ 現在時刻: {datetime.now()}, 次のジョブ: {next_job.job_func.__name__} at {next_job.next_run}")
+                    print(f"⏰ 現在時刻: {current_time}, 次のジョブ: {next_job.job_func.__name__} at {next_job.next_run}")
                 else:
                     print(f"⚠️ スケジュールされたジョブがありません")
                 
                 time.sleep(60)  # 1分ごとにチェック
+                
             except Exception as e:
                 print(f"❌ スケジューラーエラー: {e}")
+                print(f"📝 エラー詳細: {type(e).__name__}: {str(e)}")
+                # エラーが発生してもスケジューラーを停止させない
                 time.sleep(60)
+                continue
     
     def stop(self):
         """スケジューラーを停止"""

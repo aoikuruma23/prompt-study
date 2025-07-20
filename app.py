@@ -6,6 +6,7 @@ from scheduler import LearningScheduler
 import threading
 import sys
 from database import LearningDatabase
+from datetime import datetime
 
 # 環境変数を読み込み
 load_dotenv()
@@ -69,6 +70,31 @@ def index():
         <li>ヘルプ - ヘルプを表示</li>
     </ul>
     """
+
+@app.route('/health')
+def health_check():
+    """ヘルスチェックエンドポイント（UptimeRobot用）"""
+    try:
+        # スケジューラーの状態を確認
+        scheduler_status = "running" if scheduler.running else "stopped"
+        
+        # データベースの状態を確認
+        db = LearningDatabase()
+        user_count = len(db.get_all_users())
+        
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "scheduler": scheduler_status,
+            "active_users": user_count,
+            "uptime": "online"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }, 500
 
 @app.route('/callback', methods=['POST'])
 def callback():
@@ -225,5 +251,11 @@ if __name__ == '__main__':
     print(f"🚀 アプリケーションを開始します (ポート: {port})")
     print(f"🌐 ローカルURL: http://localhost:{port}")
     print(f"📱 LINE Webhook URL: http://localhost:{port}/callback")
+    print(f"🏥 ヘルスチェック: http://localhost:{port}/health")
+    print(f"📊 ステータス: http://localhost:{port}/status")
+    
+    # 有料プラン対応のログ
+    print(f"💎 Render.com有料プラン対応: スリープなし、24時間稼働")
+    print(f"📈 リソース強化: メモリ増加、CPU強化")
     
     app.run(host='0.0.0.0', port=port, debug=debug) 
