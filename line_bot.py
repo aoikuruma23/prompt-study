@@ -1,4 +1,5 @@
 import os
+import requests
 from database import LearningDatabase
 from learning_content import LearningContentManager
 from quiz_manager import QuizManager
@@ -16,7 +17,7 @@ except ImportError:
 class LineBotHandler:
     def __init__(self):
         if not LINE_BOT_AVAILABLE:
-            print("⚠️ LINE Bot SDKが利用できないため、テストモードで動作します")
+            print("⚠️ LINE Bot SDKが利用できないため、テストモードで動作します", flush=True)
             self.line_bot_api = None
             self.handler = None
             self.channel_access_token = "dummy_token"
@@ -24,18 +25,15 @@ class LineBotHandler:
         else:
             self.channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
             self.channel_secret = os.getenv('LINE_CHANNEL_SECRET')
-            
             if not self.channel_access_token or not self.channel_secret:
-                # テスト用のダミー値を設定
                 self.channel_access_token = "dummy_token"
                 self.channel_secret = "dummy_secret"
-                print("⚠️ 環境変数が設定されていないため、テストモードで動作します")
-            
+                print("⚠️ 環境変数が設定されていないため、テストモードで動作します", flush=True)
             try:
                 self.line_bot_api = LineBotApi(self.channel_access_token)
                 self.handler = WebhookHandler(self.channel_secret)
             except Exception as e:
-                print(f"⚠️ LINE Bot API初期化エラー: {e}")
+                print(f"⚠️ LINE Bot API初期化エラー: {e}", flush=True)
                 self.line_bot_api = None
                 self.handler = None
         
@@ -48,8 +46,109 @@ class LineBotHandler:
         # イベントハンドラーを設定
         self.setup_handlers()
         
-        print(f"LINE_CHANNEL_ACCESS_TOKEN: {self.channel_access_token}")
-        print(f"LINE_CHANNEL_SECRET: {self.channel_secret}")
+        print(f"LINE_CHANNEL_ACCESS_TOKEN: {self.channel_access_token}", flush=True)
+        print(f"LINE_CHANNEL_SECRET: {self.channel_secret}", flush=True)
+        
+        # アプリ起動時のダミーpushメッセージ送信
+        self.send_startup_activation_message()
+    
+    def send_startup_activation_message(self):
+        """アプリ起動時にダミーのpushメッセージを送信してLINE Botをアクティブ化"""
+        try:
+            # 環境変数からアクセストークンとユーザーIDを取得
+            channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
+            activation_user_id = os.getenv('LINE_ACTIVATION_USER_ID')
+            
+            if not channel_access_token:
+                print("⚠️ LINE_CHANNEL_ACCESS_TOKENが設定されていないため、アクティベーション送信をスキップします", flush=True)
+                return False
+            
+            if not activation_user_id:
+                print("⚠️ LINE_ACTIVATION_USER_IDが設定されていないため、アクティベーション送信をスキップします", flush=True)
+                return False
+            
+            # LINE Messaging APIのpushエンドポイントにPOSTリクエスト
+            url = "https://api.line.me/v2/bot/message/push"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {channel_access_token}"
+            }
+            
+            # アクティベーションメッセージを送信
+            activation_data = {
+                "to": activation_user_id,
+                "messages": [
+                    {
+                        "type": "text",
+                        "text": "🤖 プロンプトエンジニアリング学習Botが起動しました！\n\n毎日3回の学習メッセージと週1回のテストを自動配信します。\n\n何かメッセージを送信すると、学習が始まります！"
+                    }
+                ]
+            }
+            
+            print(f"🚀 アプリ起動時のアクティベーションメッセージを送信中...", flush=True)
+            print(f"📤 送信先ユーザーID: {activation_user_id}", flush=True)
+            
+            response = requests.post(url, headers=headers, json=activation_data)
+            
+            if response.status_code == 200:
+                print("✅ アクティベーションメッセージの送信に成功しました", flush=True)
+                print(f"📊 レスポンス: {response.status_code} - {response.text}", flush=True)
+                
+                # 既存ユーザー全員にも起動通知を送信
+                self.send_startup_notification_to_all_users(channel_access_token, headers)
+                
+                return True
+            else:
+                print(f"❌ アクティベーションメッセージの送信に失敗しました", flush=True)
+                print(f"📊 ステータスコード: {response.status_code}", flush=True)
+                print(f"📊 レスポンス: {response.text}", flush=True)
+                return False
+                
+        except Exception as e:
+            print(f"❌ アクティベーションメッセージ送信エラー: {e}", flush=True)
+            return False
+    
+    def send_startup_notification_to_all_users(self, channel_access_token, headers):
+        """既存ユーザー全員に起動通知を送信"""
+        try:
+            # データベースから全ユーザーを取得
+            all_users = self.db.get_all_users()
+            
+            if not all_users:
+                print("📝 既存ユーザーが登録されていません", flush=True)
+                return
+            
+            print(f"📤 既存ユーザー {len(all_users)}人に起動通知を送信中...", flush=True)
+            
+            # 各ユーザーに起動通知を送信
+            for user_id in all_users:
+                try:
+                    notification_data = {
+                        "to": user_id,
+                        "messages": [
+                            {
+                                "type": "text",
+                                "text": "🔄 プロンプトエンジニアリング学習Botが再起動しました！\n\n学習スケジュールは継続されます。\n\n今夜20時の学習メッセージをお楽しみに！"
+                            }
+                        ]
+                    }
+                    
+                    response = requests.post("https://api.line.me/v2/bot/message/push", 
+                                          headers=headers, json=notification_data)
+                    
+                    if response.status_code == 200:
+                        print(f"✅ ユーザー {user_id} に起動通知を送信しました", flush=True)
+                    else:
+                        print(f"⚠️ ユーザー {user_id} への起動通知送信に失敗: {response.status_code}", flush=True)
+                        
+                except Exception as e:
+                    print(f"❌ ユーザー {user_id} への起動通知送信エラー: {e}", flush=True)
+                    continue
+            
+            print(f"✅ 起動通知の送信が完了しました（対象: {len(all_users)}人）", flush=True)
+            
+        except Exception as e:
+            print(f"❌ 起動通知送信エラー: {e}", flush=True)
     
     def setup_handlers(self):
         """イベントハンドラーを設定"""
