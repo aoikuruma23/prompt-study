@@ -27,23 +27,21 @@ class QuizManager:
         return None
     
     def get_weekly_quiz(self, user_id):
-        """ユーザーのレベルに応じた週間クイズを取得"""
+        """ユーザーのレベルに応じた週間クイズを取得し、出題IDを保存"""
         user_level = self.db.get_user_level(user_id)
-        
-        # レベルに応じたクイズセットを選択
         if user_level == "beginner":
             quiz_set = "beginner_quiz"
         elif user_level == "intermediate":
             quiz_set = "intermediate_quiz"
         else:
             quiz_set = "advanced_quiz"
-        
         available_quizzes = self.quiz_data.get(quiz_set, [])
         if not available_quizzes:
             return None
-        
-        # ランダムにクイズを選択
-        return random.choice(available_quizzes)
+        quiz = random.choice(available_quizzes)
+        # 出題したクイズIDを保存
+        self.db.set_last_quiz_id(user_id, quiz['id'])
+        return quiz
     
     def format_quiz_message(self, quiz):
         """クイズをメッセージ形式にフォーマット"""
@@ -76,28 +74,19 @@ class QuizManager:
             print(f"クイズ送信エラー: {e}")
             return False
     
-    def process_quiz_answer(self, user_id, answer_text):
-        """クイズの回答を処理"""
+    def process_quiz_answer(self, user_id, answer_text, line_bot=None):
+        """クイズの回答を処理し、昇格判定も行う。出題時のクイズIDで判定"""
         try:
             user_answer = int(answer_text) - 1  # 0ベースに変換
         except ValueError:
             return "❌ 1〜4の数字で回答してください。"
-        
         if user_answer < 0 or user_answer > 3:
             return "❌ 1〜4の数字で回答してください。"
-        
-        # 最近のクイズを取得（実際の実装では、現在のクイズIDを追跡する必要があります）
-        # ここでは簡略化のため、ランダムにクイズを選択
-        user_level = self.db.get_user_level(user_id)
-        if user_level == "beginner":
-            quiz_set = "beginner_quiz"
-        elif user_level == "intermediate":
-            quiz_set = "intermediate_quiz"
-        else:
-            quiz_set = "advanced_quiz"
-        
-        quiz = random.choice(self.quiz_data.get(quiz_set, []))
-        
+        # 直近出題したクイズIDを取得
+        quiz_id = self.db.get_last_quiz_id(user_id)
+        quiz = self.get_quiz_by_id(quiz_id) if quiz_id else None
+        if not quiz:
+            return "❌ 有効なクイズが見つかりません。再度クイズを受けてください。"
         # 結果を記録
         self.db.record_quiz_result(
             user_id, 
@@ -105,17 +94,28 @@ class QuizManager:
             user_answer, 
             quiz['correct_answer']
         )
-        
         # 結果メッセージを作成
         is_correct = user_answer == quiz['correct_answer']
-        
         if is_correct:
             message = "✅ 正解です！\n\n"
         else:
             message = f"❌ 不正解です。\n正解は {quiz['correct_answer'] + 1} でした。\n\n"
-        
         message += f"💡 解説：\n{quiz['explanation']}"
-        
+        # 昇格判定
+        stats = self.db.get_quiz_statistics(user_id, days=365)
+        if stats and stats[0] >= 10:
+            total_quizzes, correct_answers, _ = stats
+            user_level = self.db.get_user_level(user_id)
+            if user_level == "beginner" and correct_answers >= 7:
+                self.db.update_user_level(user_id, "intermediate")
+                message += "\n\n🎉 おめでとうございます！次回から中級クイズに進みます。"
+                if line_bot:
+                    line_bot.push_message(user_id, "🎉 おめでとうございます！次回から中級クイズに進みます。")
+            elif user_level == "intermediate" and correct_answers >= 7:
+                self.db.update_user_level(user_id, "advanced")
+                message += "\n\n🎉 素晴らしい！次回から上級クイズに進みます。"
+                if line_bot:
+                    line_bot.push_message(user_id, "🎉 素晴らしい！次回から上級クイズに進みます。")
         return message
     
     def get_quiz_statistics_message(self, user_id):

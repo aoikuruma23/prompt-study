@@ -241,3 +241,33 @@ class LearningDatabase:
                 'weekly_lessons': weekly_lessons,
                 'quiz_accuracy': quiz_accuracy
             } 
+
+    def set_last_quiz_id(self, user_id, quiz_id):
+        """ユーザーごとに直近出題したクイズIDを保存"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS user_state (
+                    user_id TEXT PRIMARY KEY,
+                    last_quiz_id TEXT
+                )
+            ''')
+            cursor.execute('''
+                INSERT OR REPLACE INTO user_state (user_id, last_quiz_id)
+                VALUES (?, ?)
+            ''', (user_id, quiz_id))
+            conn.commit()
+
+    def get_last_quiz_id(self, user_id):
+        """ユーザーごとに直近出題したクイズIDを取得"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS user_state (
+                    user_id TEXT PRIMARY KEY,
+                    last_quiz_id TEXT
+                )
+            ''')
+            cursor.execute('SELECT last_quiz_id FROM user_state WHERE user_id = ?', (user_id,))
+            result = cursor.fetchone()
+            return result[0] if result else None 
