@@ -20,29 +20,30 @@ class LearningScheduler:
         """スケジューラーを開始"""
         print("🚀 学習スケジューラーを開始しました")
         
+        # 月間制限に達したため、配信を一時停止
+        print("⚠️ 月間制限に達したため、配信を一時停止しています")
+        print("📅 来月1日または有料プランアップグレード後に再開してください")
+        
         # 毎日の学習メッセージ（10時、15時、20時）
-        schedule.every().day.at("10:00").do(self.send_morning_lesson)
-        schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
-        schedule.every().day.at("20:00").do(self.send_evening_lesson)
+        # schedule.every().day.at("10:00").do(self.send_morning_lesson)
+        # schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
+        # schedule.every().day.at("20:00").do(self.send_evening_lesson)
         
         # 週間クイズ（日曜20時）
-        schedule.every().sunday.at("20:00").do(self.send_weekly_quiz)
+        # schedule.every().sunday.at("20:00").do(self.send_weekly_quiz)
         
         # 週間サマリー（土曜21時）
-        schedule.every().saturday.at("21:00").do(self.send_weekly_summary)
+        # schedule.every().saturday.at("21:00").do(self.send_weekly_summary)
         
         # 復習メッセージ（水曜19時）
-        schedule.every().wednesday.at("19:00").do(self.send_review_reminder)
+        # schedule.every().wednesday.at("19:00").do(self.send_review_reminder)
         
         self.running = True
         
         # スケジュール設定の確認
         print(f"📅 スケジュール設定完了:")
-        print(f"   - 毎日 10:00, 15:00, 20:00: 学習メッセージ")
-        print(f"   - 日曜 20:00: 週間クイズ")
-        print(f"   - 土曜 21:00: 週間サマリー")
-        print(f"   - 水曜 19:00: 復習リマインダー")
-        print(f"   - テスト用: 毎日 10:00, 15:00, 20:00: 学習メッセージ")
+        print(f"   - 配信一時停止中（月間制限のため）")
+        print(f"   - 来月1日または有料プランアップグレード後に再開")
         
         # 現在のスケジュールを確認
         print(f"📋 現在のスケジュール:")
@@ -216,13 +217,13 @@ class LearningScheduler:
             # データベースから実際のユーザーIDを取得
             users = self.db.get_all_users()
             if users:
-                print(f"📋 データベースから取得したユーザー: {users}")
+                print(f"📋 データベースから取得したユーザー: {users}", flush=True)
                 return users
             else:
-                print("⚠️ データベースにユーザーが登録されていません")
+                print("⚠️ データベースにユーザーが登録されていません", flush=True)
                 return []
         except Exception as e:
-            print(f"⚠️ ユーザー取得エラー: {e}")
+            print(f"⚠️ ユーザー取得エラー: {e}", flush=True)
             return []
     
     def manual_send_lesson(self, user_id):
