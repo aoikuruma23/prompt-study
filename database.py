@@ -313,6 +313,18 @@ class LearningDatabase:
                 cursor = conn.cursor()
                 # 日付を文字列形式に変換
                 date_str = date.strftime('%Y-%m-%d')
+                
+                # まず、実際のasked_atの値を確認
+                cursor.execute('''
+                    SELECT asked_at FROM question_history 
+                    WHERE user_id = ? 
+                    ORDER BY asked_at DESC 
+                    LIMIT 3
+                ''', (user_id,))
+                recent_records = cursor.fetchall()
+                print(f"🔍 デバッグ: 最近のasked_at値 = {recent_records}")
+                
+                # 日付比較を複数の方法で試行
                 cursor.execute('''
                     SELECT COUNT(*) FROM question_history 
                     WHERE user_id = ? AND strftime('%Y-%m-%d', asked_at) = ?
@@ -320,6 +332,18 @@ class LearningDatabase:
                 result = cursor.fetchone()
                 count = result[0] if result else 0
                 print(f"🔍 デバッグ: 質問回数取得 - user_id={user_id}, date={date_str}, count={count}")
+                
+                # もし0の場合、別の方法で試行
+                if count == 0:
+                    cursor.execute('''
+                        SELECT COUNT(*) FROM question_history 
+                        WHERE user_id = ? AND asked_at >= ? AND asked_at < ?
+                    ''', (user_id, date_str, (date + timedelta(days=1)).strftime('%Y-%m-%d')))
+                    result2 = cursor.fetchone()
+                    count2 = result2[0] if result2 else 0
+                    print(f"🔍 デバッグ: 代替方法での質問回数 = {count2}")
+                    return count2
+                
                 return count
         except Exception as e:
             print(f"❌ 質問回数取得エラー: {e}")
