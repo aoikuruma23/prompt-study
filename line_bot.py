@@ -48,8 +48,10 @@ class LineBotHandler:
         # OpenAI API設定
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
         if self.openai_api_key:
+            # APIキーから余分なスペースや改行を削除
+            self.openai_api_key = self.openai_api_key.strip()
             openai.api_key = self.openai_api_key
-            print("✅ OpenAI API設定完了")
+            print(f"✅ OpenAI API設定完了: {self.openai_api_key[:10]}...")
         else:
             print("⚠️ OpenAI APIキーが設定されていません")
         
