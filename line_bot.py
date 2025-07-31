@@ -3,6 +3,8 @@ import requests
 from database import LearningDatabase
 from learning_content import LearningContentManager
 from quiz_manager import QuizManager
+import openai
+from datetime import datetime, timedelta
 
 # LINE Bot SDKのインポートを試行
 try:
@@ -42,6 +44,14 @@ class LineBotHandler:
         print(f"DBパス: {self.db.db_path}", flush=True)
         self.learning_manager = LearningContentManager()
         self.quiz_manager = QuizManager()
+        
+        # OpenAI API設定
+        self.openai_api_key = os.getenv('OPENAI_API_KEY')
+        if self.openai_api_key:
+            openai.api_key = self.openai_api_key
+            print("✅ OpenAI API設定完了")
+        else:
+            print("⚠️ OpenAI APIキーが設定されていません")
         
         # イベントハンドラーを設定
         self.setup_handlers()
@@ -223,7 +233,8 @@ class LineBotHandler:
             return self.learning_manager.get_motivational_message()
         
         else:
-            return self.get_help_message()
+            # AI質問回答機能
+            return self.handle_ai_question(user_id, message_text)
     
     def get_help_message(self):
         """ヘルプメッセージを取得"""
@@ -238,9 +249,115 @@ class LineBotHandler:
         message += "🎯 レベル - 現在のレベルを確認\n"
         message += "💪 モチベーション - 励ましメッセージ\n"
         message += "❓ ヘルプ - このメッセージを表示\n\n"
+        message += "🤖 AI質問機能：\n"
+        message += "プロンプトエンジニアリングに関する質問を自由にしてください！\n"
+        message += "（無料プラン：1日5回まで）\n\n"
         message += "💡 クイズの回答は「1」「2」「3」「4」で送信してください。"
         
         return message
+    
+    def check_question_limit(self, user_id):
+        """質問回数制限をチェック"""
+        try:
+            # 今日の質問回数を取得
+            today = datetime.now().date()
+            daily_count = self.db.get_daily_question_count(user_id, today)
+            
+            # ユーザーのプランを取得（簡易版：全員無料プランとして扱う）
+            user_plan = "free"  # 後でプラン管理機能を追加
+            
+            if user_plan == "free" and daily_count >= 5:
+                return False, "❌ 無料プランは1日5回までです。\n\n有料プランにアップグレードすると、1日20回まで質問できます！"
+            elif user_plan == "paid" and daily_count >= 20:
+                return False, "❌ 本日の質問上限に達しました。\n\n明日またお試しください！"
+            
+            return True, None
+        except Exception as e:
+            print(f"質問制限チェックエラー: {e}")
+            return True, None
+    
+    def is_appropriate_question(self, question):
+        """質問内容が適切かチェック"""
+        inappropriate_keywords = [
+            "政治", "宗教", "暴力", "差別", "個人情報", "パスワード", "クレジットカード",
+            "政治", "宗教", "暴力", "差別", "個人情報", "パスワード", "クレジットカード",
+            "politics", "religion", "violence", "discrimination", "personal info", "password", "credit card"
+        ]
+        
+        question_lower = question.lower()
+        for keyword in inappropriate_keywords:
+            if keyword in question_lower:
+                return False
+        
+        return True
+    
+    def handle_ai_question(self, user_id, question):
+        """AI質問回答機能"""
+        try:
+            # 質問制限チェック
+            can_ask, limit_message = self.check_question_limit(user_id)
+            if not can_ask:
+                return limit_message
+            
+            # 不適切な質問チェック
+            if not self.is_appropriate_question(question):
+                return "❌ 申し訳ございませんが、その質問にはお答えできません。\n\nプロンプトエンジニアリングやAI活用に関する質問にお答えします。"
+            
+            # OpenAI APIが利用可能かチェック
+            if not self.openai_api_key:
+                return "❌ AI回答機能は現在利用できません。\n\nプロンプトエンジニアリングに関する質問は、学習コンテンツで確認してください。"
+            
+            # 質問回数を記録
+            self.db.record_question_asked(user_id)
+            
+            # AI回答を生成
+            response = self.generate_ai_response(question)
+            
+            return response
+            
+        except Exception as e:
+            print(f"AI質問処理エラー: {e}")
+            return "❌ 申し訳ございませんが、回答の生成中にエラーが発生しました。\n\nしばらく時間をおいてから再度お試しください。"
+    
+    def generate_ai_response(self, question):
+        """AI回答を生成"""
+        try:
+            # プロンプトエンジニアリングに特化したシステムプロンプト
+            system_prompt = """あなたはプロンプトエンジニアリングの専門家です。
+以下のガイドラインに従って回答してください：
+
+1. プロンプトエンジニアリングやAI活用に関する質問に専門的に回答
+2. 実践的で具体的な例を交えて説明
+3. 日本語で丁寧に回答
+4. 学習者のレベルに合わせた説明
+5. 不適切な内容には回答しない
+
+質問："""
+
+            # OpenAI APIで回答を生成
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": question}
+                ],
+                max_tokens=500,
+                temperature=0.7
+            )
+            
+            ai_response = response.choices[0].message.content.strip()
+            
+            # 回答に制限情報を追加
+            daily_count = self.db.get_daily_question_count(user_id, datetime.now().date())
+            remaining = max(0, 5 - daily_count)  # 無料プラン想定
+            
+            response_with_info = f"🤖 AI回答：\n\n{ai_response}\n\n---\n📊 今日の質問残り回数: {remaining}回"
+            
+            return response_with_info
+            
+        except Exception as e:
+            print(f"AI回答生成エラー: {e}")
+            return "❌ AI回答の生成に失敗しました。\n\nプロンプトエンジニアリングに関する質問は、学習コンテンツで確認してください。"
     
     def get_level_message(self, user_id):
         """レベル情報メッセージを取得"""

@@ -70,6 +70,17 @@ class LearningDatabase:
                 )
             ''')
             
+            # 質問履歴テーブル
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS question_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT,
+                    question TEXT,
+                    asked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (user_id)
+                )
+            ''')
+            
             conn.commit()
     
     def add_user(self, user_id, level="beginner"):
@@ -270,4 +281,25 @@ class LearningDatabase:
             ''')
             cursor.execute('SELECT last_quiz_id FROM user_state WHERE user_id = ?', (user_id,))
             result = cursor.fetchone()
-            return result[0] if result else None 
+            return result[0] if result else None
+    
+    def record_question_asked(self, user_id, question=""):
+        """質問を記録"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO question_history (user_id, question)
+                VALUES (?, ?)
+            ''', (user_id, question))
+            conn.commit()
+    
+    def get_daily_question_count(self, user_id, date):
+        """指定日の質問回数を取得"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT COUNT(*) FROM question_history 
+                WHERE user_id = ? AND DATE(asked_at) = ?
+            ''', (user_id, date))
+            result = cursor.fetchone()
+            return result[0] if result else 0 
