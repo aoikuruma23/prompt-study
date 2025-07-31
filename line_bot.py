@@ -309,11 +309,14 @@ class LineBotHandler:
             if not self.openai_api_key:
                 return "❌ AI回答機能は現在利用できません。\n\nプロンプトエンジニアリングに関する質問は、学習コンテンツで確認してください。"
             
+            # 記録前の質問回数を取得
+            current_count = self.db.get_daily_question_count(user_id, datetime.now().date())
+            
             # 質問回数を記録
             self.db.record_question_asked(user_id)
             
-            # AI回答を生成
-            response = self.generate_ai_response(user_id, question)
+            # AI回答を生成（記録前の回数を使用）
+            response = self.generate_ai_response(user_id, question, current_count)
             
             return response
             
@@ -321,7 +324,7 @@ class LineBotHandler:
             print(f"AI質問処理エラー: {e}")
             return "❌ 申し訳ございませんが、回答の生成中にエラーが発生しました。\n\nしばらく時間をおいてから再度お試しください。"
     
-    def generate_ai_response(self, user_id, question):
+    def generate_ai_response(self, user_id, question, current_count):
         """AI回答を生成"""
         try:
             # プロンプトエンジニアリングに特化したシステムプロンプト
@@ -349,9 +352,8 @@ class LineBotHandler:
             
             ai_response = response.choices[0].message.content.strip()
             
-            # 回答に制限情報を追加
-            daily_count = self.db.get_daily_question_count(user_id, datetime.now().date())
-            remaining = max(0, 5 - daily_count)  # 無料プラン想定
+            # 回答に制限情報を追加（記録前の回数を使用）
+            remaining = max(0, 5 - (current_count + 1))  # 無料プラン想定（+1は今回の質問）
             
             response_with_info = f"🤖 AI回答：\n\n{ai_response}\n\n---\n📊 今日の質問残り回数: {remaining}回"
             
