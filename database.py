@@ -285,21 +285,32 @@ class LearningDatabase:
     
     def record_question_asked(self, user_id, question=""):
         """質問を記録"""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO question_history (user_id, question)
-                VALUES (?, ?)
-            ''', (user_id, question))
-            conn.commit()
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO question_history (user_id, question)
+                    VALUES (?, ?)
+                ''', (user_id, question))
+                conn.commit()
+                print(f"🔍 デバッグ: 質問記録成功 - user_id={user_id}, question={question[:20]}...")
+        except Exception as e:
+            print(f"❌ 質問記録エラー: {e}")
+            raise
     
     def get_daily_question_count(self, user_id, date):
         """指定日の質問回数を取得"""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT COUNT(*) FROM question_history 
-                WHERE user_id = ? AND DATE(asked_at) = ?
-            ''', (user_id, date))
-            result = cursor.fetchone()
-            return result[0] if result else 0 
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT COUNT(*) FROM question_history 
+                    WHERE user_id = ? AND DATE(asked_at) = ?
+                ''', (user_id, date))
+                result = cursor.fetchone()
+                count = result[0] if result else 0
+                print(f"🔍 デバッグ: 質問回数取得 - user_id={user_id}, date={date}, count={count}")
+                return count
+        except Exception as e:
+            print(f"❌ 質問回数取得エラー: {e}")
+            return 0 
