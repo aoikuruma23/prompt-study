@@ -23,24 +23,12 @@ class LearningScheduler:
         # 有料プランにアップグレードしたため、配信を再開
         print("✅ 有料プランにアップグレード完了！配信を再開します")
         
-        # 毎日の学習メッセージ（10時、15時、20時）
-        schedule.every().day.at("10:00").do(self.send_morning_lesson)
-        schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
-        schedule.every().day.at("20:00").do(self.send_evening_lesson)
-        
-        # 週間クイズ（日曜20時）
-        schedule.every().sunday.at("20:00").do(self.send_weekly_quiz)
-        
-        # 週間サマリー（土曜21時）
-        schedule.every().saturday.at("21:00").do(self.send_weekly_summary)
-        
-        # 復習メッセージ（水曜19時）
-        schedule.every().wednesday.at("19:00").do(self.send_review_reminder)
-        
-        self.running = True
+        # スケジュールジョブの設定
+        self.setup_scheduled_jobs()
         
         # スケジュール設定の確認
         print(f"📅 スケジュール設定完了:")
+        print(f"   - 非アクティブユーザー再開促し: 毎週月曜 09:00")
         print(f"   - 朝の学習メッセージ: 毎日 10:00")
         print(f"   - 午後の学習メッセージ: 毎日 15:00")
         print(f"   - 夜の学習メッセージ: 毎日 20:00")
@@ -128,6 +116,66 @@ class LearningScheduler:
         """復習リマインダーを送信"""
         print(f"🔄 復習リマインダーを送信中... ({datetime.now()})")
         self.send_review_reminder_to_all_users()
+    
+    def send_inactive_user_reengagement(self):
+        """一週間非アクティブユーザーに再開を促すメッセージを送信"""
+        try:
+            # 一週間以上アクティブでないユーザーを取得
+            inactive_users = self.db.get_inactive_users(days=7)
+            print(f"📢 非アクティブユーザー再開促し送信開始 - 対象ユーザー数: {len(inactive_users)}")
+            
+            for user_id in inactive_users:
+                message = """
+🤖 プロンプトエンジニアリング学習bot
+
+お久しぶりです！学習はお休みですか？
+
+💡 一週間ぶりですが、今日から再び一緒に学びませんか？
+
+🚀 AI時代の準備は継続が大切です。
+   1日1分×3回のレッスンで、着実にスキルアップできます。
+
+📅 今日の予定：
+   • 10:00 - 朝の学習メッセージ
+   • 15:00 - 午後の学習メッセージ  
+   • 20:00 - 夜の学習メッセージ
+
+💬 何か質問があれば、いつでもお気軽にどうぞ！
+   学習を再開する準備ができたら、何かメッセージを送ってください。
+
+一緒にAI時代の勝者になりましょう！
+                """
+                
+                self.line_bot.send_message(user_id, message)
+                print(f"✅ 非アクティブユーザー再開促し送信完了 - user_id: {user_id}")
+                
+        except Exception as e:
+            print(f"❌ 非アクティブユーザー再開促し送信エラー: {e}")
+
+    def setup_scheduled_jobs(self):
+        """スケジュールされたジョブを設定"""
+        try:
+            # 非アクティブユーザー再開促し（毎週月曜日AM9:00）
+            schedule.every().monday().at("09:00").do(self.send_inactive_user_reengagement)
+            
+            # 毎日の学習メッセージ（10時、15時、20時）
+            schedule.every().day.at("10:00").do(self.send_morning_lesson)
+            schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
+            schedule.every().day.at("20:00").do(self.send_evening_lesson)
+            
+            # 週間クイズ（日曜20時）
+            schedule.every().sunday().at("20:00").do(self.send_weekly_quiz)
+            
+            # 週間サマリー（土曜21時）
+            schedule.every().saturday().at("21:00").do(self.send_weekly_summary)
+            
+            # 復習メッセージ（水曜19時）
+            schedule.every().wednesday().at("19:00").do(self.send_review_reminder)
+            
+            print("✅ スケジュールジョブ設定完了")
+            
+        except Exception as e:
+            print(f"❌ スケジュールジョブ設定エラー: {e}")
     
     def send_daily_lesson_to_all_users(self, intro_message=""):
         """全ユーザーに毎日の学習メッセージを送信"""

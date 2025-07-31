@@ -338,4 +338,28 @@ class LearningDatabase:
                 return count
         except Exception as e:
             print(f"❌ 質問回数取得エラー: {e}")
-            return 0 
+            return 0
+
+    def get_inactive_users(self, days=7):
+        """指定日数以上アクティブでないユーザーを取得"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                # 指定日数前の日付を計算
+                cutoff_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+                
+                # 最後のアクティビティが指定日数前より古いユーザーを取得
+                cursor.execute('''
+                    SELECT user_id FROM users 
+                    WHERE last_activity < ? OR last_activity IS NULL
+                ''', (cutoff_date,))
+                
+                inactive_users = [row[0] for row in cursor.fetchall()]
+                print(f"📊 非アクティブユーザー取得 - {days}日以上: {len(inactive_users)}人")
+                
+                return inactive_users
+                
+        except Exception as e:
+            print(f"❌ 非アクティブユーザー取得エラー: {e}")
+            return [] 
