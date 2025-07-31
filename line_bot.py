@@ -313,7 +313,7 @@ class LineBotHandler:
             self.db.record_question_asked(user_id)
             
             # AI回答を生成
-            response = self.generate_ai_response(question)
+            response = self.generate_ai_response(user_id, question)
             
             return response
             
@@ -321,7 +321,7 @@ class LineBotHandler:
             print(f"AI質問処理エラー: {e}")
             return "❌ 申し訳ございませんが、回答の生成中にエラーが発生しました。\n\nしばらく時間をおいてから再度お試しください。"
     
-    def generate_ai_response(self, question):
+    def generate_ai_response(self, user_id, question):
         """AI回答を生成"""
         try:
             # プロンプトエンジニアリングに特化したシステムプロンプト
