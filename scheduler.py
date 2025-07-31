@@ -20,30 +20,33 @@ class LearningScheduler:
         """スケジューラーを開始"""
         print("🚀 学習スケジューラーを開始しました")
         
-        # 月間制限に達したため、配信を一時停止
-        print("⚠️ 月間制限に達したため、配信を一時停止しています")
-        print("📅 来月1日または有料プランアップグレード後に再開してください")
+        # 有料プランにアップグレードしたため、配信を再開
+        print("✅ 有料プランにアップグレード完了！配信を再開します")
         
         # 毎日の学習メッセージ（10時、15時、20時）
-        # schedule.every().day.at("10:00").do(self.send_morning_lesson)
-        # schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
-        # schedule.every().day.at("20:00").do(self.send_evening_lesson)
+        schedule.every().day.at("10:00").do(self.send_morning_lesson)
+        schedule.every().day.at("15:00").do(self.send_afternoon_lesson)
+        schedule.every().day.at("20:00").do(self.send_evening_lesson)
         
         # 週間クイズ（日曜20時）
-        # schedule.every().sunday.at("20:00").do(self.send_weekly_quiz)
+        schedule.every().sunday.at("20:00").do(self.send_weekly_quiz)
         
         # 週間サマリー（土曜21時）
-        # schedule.every().saturday.at("21:00").do(self.send_weekly_summary)
+        schedule.every().saturday.at("21:00").do(self.send_weekly_summary)
         
         # 復習メッセージ（水曜19時）
-        # schedule.every().wednesday.at("19:00").do(self.send_review_reminder)
+        schedule.every().wednesday.at("19:00").do(self.send_review_reminder)
         
         self.running = True
         
         # スケジュール設定の確認
         print(f"📅 スケジュール設定完了:")
-        print(f"   - 配信一時停止中（月間制限のため）")
-        print(f"   - 来月1日または有料プランアップグレード後に再開")
+        print(f"   - 朝の学習メッセージ: 毎日 10:00")
+        print(f"   - 午後の学習メッセージ: 毎日 15:00")
+        print(f"   - 夜の学習メッセージ: 毎日 20:00")
+        print(f"   - 週間クイズ: 日曜 20:00")
+        print(f"   - 週間サマリー: 土曜 21:00")
+        print(f"   - 復習リマインダー: 水曜 19:00")
         
         # 現在のスケジュールを確認
         print(f"📋 現在のスケジュール:")

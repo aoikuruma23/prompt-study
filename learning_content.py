@@ -119,6 +119,9 @@ class LearningContentManager:
             message += "\n\n📝 例文:\n"
             for i, example in enumerate(lesson['examples'][:3], 1):  # 最大3つまで
                 message += f"{i}. {example}\n"
+                # 例文の間にスペースを追加（最後の例文以外）
+                if i < min(3, len(lesson['examples'])):
+                    message += "\n"
         
         # タグがあれば追加
         if 'tags' in lesson and lesson['tags']:
