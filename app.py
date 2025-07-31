@@ -44,31 +44,409 @@ scheduler_thread.start()
 print("✅ スケジューラースレッドを開始しました")
 
 @app.route('/')
-def index():
-    """ホームページ"""
+def home():
+    return "LINE Bot is running!"
+
+@app.route('/privacy')
+def privacy():
     return """
-    <h1>🤖 プロンプトエンジニアリング学習LINE Bot</h1>
-    <p>毎日3回の学習メッセージと週1回のテストを自動配信します。</p>
-    <h2>📅 スケジュール</h2>
-    <ul>
-        <li>毎日 10:00, 15:00, 20:00: 学習メッセージ</li>
-        <li>日曜 20:00: 週間クイズ</li>
-        <li>土曜 21:00: 週間サマリー</li>
-        <li>水曜 19:00: 復習リマインダー</li>
-        <li>   - テスト用: 毎日 18:40: 夜の学習メッセージ</li>
-    </ul>
-    <h2>📝 利用可能なコマンド</h2>
-    <ul>
-        <li>レッスン - 学習コンテンツを表示</li>
-        <li>クイズ - 理解度テストを開始</li>
-        <li>復習 - 復習コンテンツを表示</li>
-        <li>進捗 - 学習進捗を確認</li>
-        <li>統計 - テスト結果を確認</li>
-        <li>苦手 - 苦手分野を確認</li>
-        <li>レベル - 現在のレベルを確認</li>
-        <li>モチベーション - 励ましメッセージ</li>
-        <li>ヘルプ - ヘルプを表示</li>
-    </ul>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プライバシーポリシー - プロンプト学習支援LINEボット</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #00B900;
+            border-bottom: 3px solid #00B900;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .highlight {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-left: 4px solid #00B900;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>プライバシーポリシー</h1>
+        
+        <div class="highlight">
+            <strong>最終更新日:</strong> 2025年8月1日
+        </div>
+
+        <h2>1. 基本方針</h2>
+        <p>プロンプト学習支援LINEボット（以下「本サービス」）は、ユーザーの個人情報の保護を最重要事項として取り扱います。</p>
+
+        <h2>2. 収集する個人情報</h2>
+        
+        <h3>自動収集情報</h3>
+        <ul>
+            <li>LINEユーザーID</li>
+            <li>メッセージ送受信履歴</li>
+            <li>学習進捗データ</li>
+            <li>クイズ回答履歴</li>
+            <li>質問履歴</li>
+        </ul>
+
+        <h3>手動収集情報</h3>
+        <p>なし（現在のところ）</p>
+
+        <h2>3. 個人情報の使用目的</h2>
+        
+        <h3>主要な使用目的</h3>
+        <ol>
+            <li><strong>学習支援サービスの提供</strong>
+                <ul>
+                    <li>個別学習メッセージの配信</li>
+                    <li>学習進捗の管理</li>
+                    <li>復習メッセージの提供</li>
+                </ul>
+            </li>
+            <li><strong>サービス改善</strong>
+                <ul>
+                    <li>機能の最適化</li>
+                    <li>ユーザー体験の向上</li>
+                    <li>新機能の開発</li>
+                </ul>
+            </li>
+            <li><strong>サポート対応</strong>
+                <ul>
+                    <li>ユーザーからの問い合わせ対応</li>
+                    <li>技術的問題の解決</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2>4. 個人情報の管理</h2>
+        
+        <h3>データ保護措置</h3>
+        <ul>
+            <li>データベースの暗号化</li>
+            <li>アクセス権限の制限</li>
+            <li>定期的なセキュリティ監査</li>
+            <li>バックアップの暗号化</li>
+        </ul>
+
+        <h3>データ保存期間</h3>
+        <ul>
+            <li>サービス利用期間中</li>
+            <li>アカウント削除後30日以内に完全削除</li>
+        </ul>
+
+        <h2>5. 個人情報の第三者提供</h2>
+        
+        <h3>提供しない場合</h3>
+        <ul>
+            <li>ユーザーの同意がない限り、個人情報を第三者に提供しません</li>
+            <li>法令に基づく場合を除きます</li>
+        </ul>
+
+        <h3>委託先</h3>
+        <ul>
+            <li><strong>Render.com</strong>: ホスティングサービス</li>
+            <li><strong>OpenAI</strong>: AI質問機能</li>
+            <li><strong>LINE</strong>: メッセージングサービス</li>
+        </ul>
+
+        <h2>6. ユーザーの権利</h2>
+        
+        <h3>アクセス権</h3>
+        <ul>
+            <li>ご自身の個人情報の確認</li>
+            <li>データの修正・削除要求</li>
+        </ul>
+
+        <h3>削除権</h3>
+        <ul>
+            <li>アカウント削除による全データの削除</li>
+            <li>特定データの削除要求</li>
+        </ul>
+
+        <h2>7. お問い合わせ</h2>
+        
+        <h3>個人情報に関するお問い合わせ</h3>
+        <ul>
+            <li>LINEメッセージでの直接連絡</li>
+            <li>プライバシーに関する質問・要望</li>
+        </ul>
+
+        <h2>8. 改定について</h2>
+        <p>本プライバシーポリシーは、必要に応じて改定される場合があります。改定時は、LINEメッセージでお知らせします。</p>
+
+        <div class="footer">
+            <p><strong>制定日:</strong> 2025年8月1日</p>
+            <p><strong>最終更新日:</strong> 2025年8月1日</p>
+        </div>
+    </div>
+</body>
+</html>
+    """
+
+@app.route('/terms')
+def terms():
+    return """
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>利用規約 - プロンプト学習支援LINEボット</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #00B900;
+            border-bottom: 3px solid #00B900;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .highlight {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-left: 4px solid #00B900;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>利用規約</h1>
+        
+        <div class="highlight">
+            <strong>最終更新日:</strong> 2025年8月1日
+        </div>
+
+        <h2>1. 総則</h2>
+        
+        <h3>適用範囲</h3>
+        <p>本規約は、プロンプト学習支援LINEボット（以下「本サービス」）の利用に関する条件を定めるものです。</p>
+
+        <h3>規約の変更</h3>
+        <p>本規約は、事前の通知なく変更される場合があります。変更後は、LINEメッセージでお知らせします。</p>
+
+        <h2>2. サービスの内容</h2>
+        
+        <h3>提供サービス</h3>
+        <ol>
+            <li><strong>学習メッセージ配信</strong>
+                <ul>
+                    <li>毎日の学習コンテンツ配信</li>
+                    <li>個別学習進捗に応じたメッセージ</li>
+                </ul>
+            </li>
+            <li><strong>週間クイズ</strong>
+                <ul>
+                    <li>学習内容の確認クイズ</li>
+                    <li>正答率の記録・分析</li>
+                </ul>
+            </li>
+            <li><strong>AI質問機能</strong>
+                <ul>
+                    <li>学習に関する質問への回答</li>
+                    <li>1日5回までの制限</li>
+                </ul>
+            </li>
+            <li><strong>学習進捗管理</strong>
+                <ul>
+                    <li>学習履歴の記録</li>
+                    <li>復習メッセージの提供</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2>3. 利用条件</h2>
+        
+        <h3>利用資格</h3>
+        <ul>
+            <li>LINEアカウントを保有している方</li>
+            <li>本規約に同意する方</li>
+            <li>法令に違反しない方</li>
+        </ul>
+
+        <h3>禁止事項</h3>
+        <p>以下の行為は禁止します：</p>
+        <ul>
+            <li>法令違反行為</li>
+            <li>他のユーザーへの迷惑行為</li>
+            <li>システムへの攻撃行為</li>
+            <li>不適切な内容の投稿</li>
+            <li>営業目的での利用</li>
+        </ul>
+
+        <h2>4. 利用料金</h2>
+        
+        <h3>現在の料金体系</h3>
+        <ul>
+            <li><strong>基本サービス</strong>: 無料</li>
+            <li><strong>追加料金</strong>: なし</li>
+        </ul>
+
+        <h3>将来の料金変更</h3>
+        <ul>
+            <li>料金変更時は事前に通知</li>
+            <li>ユーザーの同意を得て変更</li>
+        </ul>
+
+        <h2>5. サービスの利用</h2>
+        
+        <h3>利用時間</h3>
+        <ul>
+            <li>24時間利用可能</li>
+            <li>メンテナンス時は事前通知</li>
+        </ul>
+
+        <h3>利用制限</h3>
+        <ul>
+            <li>1日5回までのAI質問</li>
+            <li>適切な利用を心がける</li>
+        </ul>
+
+        <h2>6. 免責事項</h2>
+        
+        <h3>サービスの提供</h3>
+        <ul>
+            <li>サービスの完全性を保証しません</li>
+            <li>予告なくサービスを変更・停止する場合があります</li>
+        </ul>
+
+        <h3>データの損失</h3>
+        <ul>
+            <li>データの損失について責任を負いません</li>
+            <li>重要なデータはご自身でバックアップしてください</li>
+        </ul>
+
+        <h3>外部サービス</h3>
+        <p>LINE、OpenAI等の外部サービスの利用については、各サービスの利用規約に従います</p>
+
+        <h2>7. 知的財産権</h2>
+        
+        <h3>権利の帰属</h3>
+        <ul>
+            <li>本サービスの著作権は提供者に帰属</li>
+            <li>ユーザーが投稿した内容の権利はユーザーに帰属</li>
+        </ul>
+
+        <h3>利用許諾</h3>
+        <p>本サービスの利用により、学習コンテンツの利用を許諾</p>
+
+        <h2>8. プライバシー</h2>
+        
+        <h3>個人情報の取り扱い</h3>
+        <ul>
+            <li>プライバシーポリシーに従って取り扱います</li>
+            <li>詳細は別途プライバシーポリシーをご確認ください</li>
+        </ul>
+
+        <h2>9. サービスの停止・終了</h2>
+        
+        <h3>停止事由</h3>
+        <ul>
+            <li>システムメンテナンス</li>
+            <li>法令違反の疑いがある場合</li>
+            <li>その他、運営上必要と判断される場合</li>
+        </ul>
+
+        <h3>終了事由</h3>
+        <ul>
+            <li>サービスの廃止</li>
+            <li>利用規約違反</li>
+            <li>その他、運営上必要と判断される場合</li>
+        </ul>
+
+        <h2>10. 準拠法・管轄裁判所</h2>
+        
+        <h3>準拠法</h3>
+        <p>日本法</p>
+
+        <h3>管轄裁判所</h3>
+        <p>東京地方裁判所</p>
+
+        <h2>11. お問い合わせ</h2>
+        
+        <h3>連絡方法</h3>
+        <ul>
+            <li>LINEメッセージでの直接連絡</li>
+            <li>利用規約に関する質問・要望</li>
+        </ul>
+
+        <div class="footer">
+            <p><strong>制定日:</strong> 2025年8月1日</p>
+            <p><strong>最終更新日:</strong> 2025年8月1日</p>
+        </div>
+    </div>
+</body>
+</html>
     """
 
 @app.route('/health')
