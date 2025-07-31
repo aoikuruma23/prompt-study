@@ -294,6 +294,14 @@ class LearningDatabase:
                 ''', (user_id, question))
                 conn.commit()
                 print(f"🔍 デバッグ: 質問記録成功 - user_id={user_id}, question={question[:20]}...")
+                
+                # 記録直後に確認
+                cursor.execute('''
+                    SELECT COUNT(*) FROM question_history WHERE user_id = ?
+                ''', (user_id,))
+                total_count = cursor.fetchone()[0]
+                print(f"🔍 デバッグ: このユーザーの総質問数 = {total_count}")
+                
         except Exception as e:
             print(f"❌ 質問記録エラー: {e}")
             raise
@@ -303,13 +311,15 @@ class LearningDatabase:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                # 日付を文字列形式に変換
+                date_str = date.strftime('%Y-%m-%d')
                 cursor.execute('''
                     SELECT COUNT(*) FROM question_history 
-                    WHERE user_id = ? AND DATE(asked_at) = ?
-                ''', (user_id, date))
+                    WHERE user_id = ? AND strftime('%Y-%m-%d', asked_at) = ?
+                ''', (user_id, date_str))
                 result = cursor.fetchone()
                 count = result[0] if result else 0
-                print(f"🔍 デバッグ: 質問回数取得 - user_id={user_id}, date={date}, count={count}")
+                print(f"🔍 デバッグ: 質問回数取得 - user_id={user_id}, date={date_str}, count={count}")
                 return count
         except Exception as e:
             print(f"❌ 質問回数取得エラー: {e}")
