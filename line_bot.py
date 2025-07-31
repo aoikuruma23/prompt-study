@@ -311,9 +311,15 @@ class LineBotHandler:
             
             # 記録前の質問回数を取得
             current_count = self.db.get_daily_question_count(user_id, datetime.now().date())
+            print(f"🔍 デバッグ: 記録前の質問回数 = {current_count}")
             
             # 質問回数を記録
             self.db.record_question_asked(user_id)
+            print(f"🔍 デバッグ: 質問を記録しました")
+            
+            # 記録後の質問回数を確認
+            after_count = self.db.get_daily_question_count(user_id, datetime.now().date())
+            print(f"🔍 デバッグ: 記録後の質問回数 = {after_count}")
             
             # AI回答を生成（記録前の回数を使用）
             response = self.generate_ai_response(user_id, question, current_count)
@@ -354,6 +360,7 @@ class LineBotHandler:
             
             # 回答に制限情報を追加（記録前の回数を使用）
             remaining = max(0, 5 - (current_count + 1))  # 無料プラン想定（+1は今回の質問）
+            print(f"🔍 デバッグ: 計算された残り回数 = {remaining} (current_count={current_count})")
             
             response_with_info = f"🤖 AI回答：\n\n{ai_response}\n\n---\n📊 今日の質問残り回数: {remaining}回"
             
