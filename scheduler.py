@@ -30,7 +30,7 @@ class LearningScheduler:
         print(f"📅 スケジュール設定完了:")
         print(f"   - 非アクティブユーザー再開促し: 毎週月曜 09:00")
         print(f"   - 朝の学習メッセージ: 毎日 10:00")
-        print(f"   - 午後の学習メッセージ: 毎日 15:20 (テスト用)")
+        print(f"   - 午後の学習メッセージ: 毎日 15:50 (テスト用)")
         print(f"   - 夜の学習メッセージ: 毎日 20:00")
         print(f"   - 週間クイズ: 日曜 20:00")
         print(f"   - 週間サマリー: 土曜 21:00")
@@ -158,9 +158,9 @@ class LearningScheduler:
             # 非アクティブユーザー再開促し（毎週月曜日AM9:00）
             schedule.every().monday.at("09:00").do(self.send_inactive_user_reengagement)
             
-            # 毎日の学習メッセージ（10時、15時20分、20時）
+            # 毎日の学習メッセージ（10時、15時50分、20時）
             schedule.every().day.at("10:00").do(self.send_morning_lesson)
-            schedule.every().day.at("15:20").do(self.send_afternoon_lesson)
+            schedule.every().day.at("15:50").do(self.send_afternoon_lesson)
             schedule.every().day.at("20:00").do(self.send_evening_lesson)
             
             # 週間クイズ（日曜20時）
