@@ -782,6 +782,54 @@ def stripe_webhook():
     else:
         abort(400)
 
+# 管理者用エンドポイント
+@app.route('/admin/activate_premium/<user_id>')
+def admin_activate_premium(user_id):
+    """管理者用：プレミアム手動アクティベート"""
+    try:
+        db = LearningDatabase()
+        
+        # プレミアムサブスクリプション作成
+        success = db.create_premium_subscription(
+            user_id=user_id,
+            stripe_subscription_id="sub_manual_admin_activation",
+            stripe_customer_id="cus_manual_admin_activation"
+        )
+        
+        if success:
+            subscription = db.get_user_subscription(user_id)
+            return {
+                "status": "success",
+                "user_id": user_id,
+                "plan_type": subscription['plan_type'],
+                "status": subscription['status'],
+                "expires_at": subscription['expires_at'],
+                "question_limit": db.get_question_limit_for_user(user_id)
+            }
+        else:
+            return {"status": "failed", "message": "Premium activation failed"}, 500
+            
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
+
+@app.route('/admin/check_user/<user_id>')
+def admin_check_user(user_id):
+    """管理者用：ユーザー状態確認"""
+    try:
+        db = LearningDatabase()
+        subscription = db.get_user_subscription(user_id)
+        question_limit = db.get_question_limit_for_user(user_id)
+        
+        return {
+            "user_id": user_id,
+            "plan_type": subscription['plan_type'],
+            "status": subscription['status'],
+            "expires_at": subscription['expires_at'],
+            "question_limit": question_limit
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
+
 if __name__ == '__main__':
     # Flaskアプリケーションを開始
     port = int(os.getenv('PORT', 5000))
