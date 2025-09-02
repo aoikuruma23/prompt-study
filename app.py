@@ -1,4 +1,4 @@
-from flask import Flask, request, abort
+from flask import Flask, request, abort, redirect, render_template_string
 import os
 from dotenv import load_dotenv
 from line_bot import LineBotHandler
@@ -6,6 +6,7 @@ from scheduler import LearningScheduler
 import threading
 import sys
 from database import LearningDatabase
+from stripe_handler import StripeHandler
 from datetime import datetime
 
 # 環境変数を読み込み
@@ -21,6 +22,14 @@ except Exception as e:
     print(f"❌ LINE Botハンドラーの初期化に失敗しました: {e}")
     print("💡 環境変数が設定されていないため、LINE Bot機能は無効化されます")
     line_bot_handler = None
+
+# Stripeハンドラーを初期化
+try:
+    stripe_handler = StripeHandler()
+    print("✅ Stripeハンドラーを初期化しました")
+except Exception as e:
+    print(f"❌ Stripeハンドラーの初期化に失敗しました: {e}")
+    stripe_handler = None
 
 # スケジューラーを初期化
 scheduler = LearningScheduler()
@@ -620,6 +629,158 @@ def restart_scheduler():
         return "✅ スケジューラーを再起動しました"
     except Exception as e:
         return f"❌ エラー: {e}"
+
+# Stripeエンドポイント
+@app.route('/stripe/checkout')
+def stripe_checkout():
+    """Stripe Checkoutページにリダイレクト"""
+    if not stripe_handler:
+        return "❌ Stripe機能が利用できません", 500
+    
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return "❌ ユーザーIDが指定されていません", 400
+    
+    checkout_url = stripe_handler.create_checkout_session(user_id)
+    if checkout_url:
+        return redirect(checkout_url)
+    else:
+        return "❌ 決済セッションの作成に失敗しました", 500
+
+@app.route('/stripe/success')
+def stripe_success():
+    """Stripe決済成功ページ"""
+    session_id = request.args.get('session_id')
+    
+    success_html = """
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>決済完了 - プロンプト学習支援Bot</title>
+        <style>
+            body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 50px;
+                background-color: #f5f5f5;
+            }
+            .success-container {
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 500px;
+                margin: 0 auto;
+            }
+            .success-icon { font-size: 64px; color: #00B900; margin-bottom: 20px; }
+            h1 { color: #00B900; }
+            p { color: #666; line-height: 1.6; }
+            .line-link {
+                display: inline-block;
+                background: #00B900;
+                color: white;
+                padding: 15px 30px;
+                text-decoration: none;
+                border-radius: 5px;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="success-container">
+            <div class="success-icon">🎉</div>
+            <h1>プレミアムプラン開始！</h1>
+            <p>お支払いが正常に完了しました。</p>
+            <p>プレミアムプラン（月額480円）が開始されました。</p>
+            
+            <h3>新しい特典</h3>
+            <ul style="text-align: left; margin: 20px 0;">
+                <li>🔸 AI質問回数: 3回 → 10回/日</li>
+                <li>🔸 すべての機能が利用可能</li>
+                <li>🔸 いつでもキャンセル可能</li>
+            </ul>
+            
+            <p>LINE Botで「プラン」と送信して新機能をお試しください！</p>
+            
+            <a href="#" class="line-link" onclick="window.close()">LINEアプリに戻る</a>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return success_html
+
+@app.route('/stripe/cancel')
+def stripe_cancel():
+    """Stripe決済キャンセルページ"""
+    cancel_html = """
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>決済キャンセル - プロンプト学習支援Bot</title>
+        <style>
+            body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 50px;
+                background-color: #f5f5f5;
+            }
+            .cancel-container {
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 500px;
+                margin: 0 auto;
+            }
+            .cancel-icon { font-size: 64px; color: #999; margin-bottom: 20px; }
+            h1 { color: #666; }
+            p { color: #666; line-height: 1.6; }
+            .line-link {
+                display: inline-block;
+                background: #00B900;
+                color: white;
+                padding: 15px 30px;
+                text-decoration: none;
+                border-radius: 5px;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="cancel-container">
+            <div class="cancel-icon">📝</div>
+            <h1>決済がキャンセルされました</h1>
+            <p>プレミアムプランへのアップグレードがキャンセルされました。</p>
+            <p>引き続き無料プラン（1日3回まで質問可能）でご利用いただけます。</p>
+            
+            <p>プレミアムプランが必要になりましたら、LINE Botで「プレミアム」と送信してください。</p>
+            
+            <a href="#" class="line-link" onclick="window.close()">LINEアプリに戻る</a>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return cancel_html
+
+@app.route('/stripe/webhook', methods=['POST'])
+def stripe_webhook():
+    """Stripe Webhookエンドポイント"""
+    if not stripe_handler:
+        return "❌ Stripe機能が利用できません", 500
+    
+    payload = request.get_data()
+    signature = request.headers.get('Stripe-Signature')
+    
+    if stripe_handler.handle_webhook(payload, signature):
+        return 'OK'
+    else:
+        abort(400)
 
 if __name__ == '__main__':
     # Flaskアプリケーションを開始

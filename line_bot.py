@@ -200,43 +200,50 @@ class LineBotHandler:
     
     def process_command(self, user_id, message_text):
         """コマンドを処理"""
+        original_text = message_text.strip()
         message_text = message_text.strip().lower()
         
         # クイズ回答処理（1-4の数字）
         if message_text in ['1', '2', '3', '4']:
             return self.quiz_manager.process_quiz_answer(user_id, message_text)
         
-        # コマンド処理
-        if message_text == 'help' or message_text == 'ヘルプ':
+        # コマンド処理（日本語は元のテキストでも比較）
+        if message_text == 'help' or original_text == 'ヘルプ':
             return self.get_help_message()
         
-        elif message_text == 'progress' or message_text == '進捗':
+        elif message_text == 'progress' or original_text == '進捗':
             return self.learning_manager.get_weekly_summary(user_id)
         
-        elif message_text == 'stats' or message_text == '統計':
+        elif message_text == 'stats' or original_text == '統計':
             return self.quiz_manager.get_quiz_statistics_message(user_id)
         
-        elif message_text == 'weak' or message_text == '苦手':
+        elif message_text == 'weak' or original_text == '苦手':
             return self.quiz_manager.get_weak_areas_message(user_id)
         
-        elif message_text == 'level' or message_text == 'レベル':
+        elif message_text == 'level' or original_text == 'レベル':
             return self.get_level_message(user_id)
         
-        elif message_text == 'lesson' or message_text == 'レッスン':
+        elif message_text == 'lesson' or original_text == 'レッスン':
             return self.request_lesson(user_id)
         
-        elif message_text == 'quiz' or message_text == 'クイズ':
+        elif message_text == 'quiz' or original_text == 'クイズ':
             return self.request_quiz(user_id)
         
-        elif message_text == 'review' or message_text == '復習':
+        elif message_text == 'review' or original_text == '復習':
             return self.request_review(user_id)
         
-        elif message_text == 'motivation' or message_text == 'モチベーション':
+        elif message_text == 'motivation' or original_text == 'モチベーション':
             return self.learning_manager.get_motivational_message()
+        
+        elif message_text == 'premium' or original_text == 'プレミアム':
+            return self.handle_premium_upgrade(user_id)
+        
+        elif message_text == 'plan' or original_text == 'プラン':
+            return self.get_plan_info(user_id)
         
         else:
             # AI質問回答機能
-            return self.handle_ai_question(user_id, message_text)
+            return self.handle_ai_question(user_id, original_text)
     
     def get_help_message(self):
         """ヘルプメッセージを取得"""
@@ -253,7 +260,9 @@ class LineBotHandler:
         message += "❓ ヘルプ - このメッセージを表示\n\n"
         message += "🤖 AI質問機能：\n"
         message += "プロンプトエンジニアリングに関する質問を自由にしてください！\n"
-        message += "（無料プラン：1日5回まで）\n\n"
+        message += "（無料プラン：1日3回、プレミアム：1日10回）\n\n"
+        message += "💎 プレミアム - プレミアムプランの詳細\n"
+        message += "📋 プラン - 現在のプラン状況を確認\n\n"
         message += "💡 クイズの回答は「1」「2」「3」「4」で送信してください。"
         
         return message
@@ -265,13 +274,16 @@ class LineBotHandler:
             today = datetime.now().date()
             daily_count = self.db.get_daily_question_count(user_id, today)
             
-            # ユーザーのプランを取得（簡易版：全員無料プランとして扱う）
-            user_plan = "free"  # 後でプラン管理機能を追加
+            # ユーザーのサブスクリプション状態を取得
+            subscription = self.db.get_user_subscription(user_id)
+            user_plan = subscription['plan_type']
+            question_limit = self.db.get_question_limit_for_user(user_id)
             
-            if user_plan == "free" and daily_count >= 5:
-                return False, "❌ 無料プランは1日5回までです。\n\n有料プランにアップグレードすると、1日20回まで質問できます！"
-            elif user_plan == "paid" and daily_count >= 20:
-                return False, "❌ 本日の質問上限に達しました。\n\n明日またお試しください！"
+            if daily_count >= question_limit:
+                if user_plan == "free":
+                    return False, f"❌ 無料プランは1日{question_limit}回までです。\n\n💎 プレミアムプランなら1日10回まで質問可能！\n「プレミアム」と送信してアップグレードしませんか？"
+                else:
+                    return False, f"❌ 本日の質問上限（{question_limit}回）に達しました。\n\n明日またお試しください！"
             
             return True, None
         except Exception as e:
@@ -359,10 +371,14 @@ class LineBotHandler:
             ai_response = response.choices[0].message.content.strip()
             
             # 回答に制限情報を追加（記録前の回数を使用）
-            remaining = max(0, 5 - (current_count + 1))  # 無料プラン想定（+1は今回の質問）
+            question_limit = self.db.get_question_limit_for_user(user_id)
+            remaining = max(0, question_limit - (current_count + 1))  # +1は今回の質問
+            subscription = self.db.get_user_subscription(user_id)
+            plan_name = "プレミアム" if subscription['plan_type'] == 'premium' else "無料"
+            
             print(f"🔍 デバッグ: 計算された残り回数 = {remaining} (current_count={current_count})")
             
-            response_with_info = f"🤖 AI回答：\n\n{ai_response}\n\n---\n📊 今日の質問残り回数: {remaining}回"
+            response_with_info = f"🤖 AI回答：\n\n{ai_response}\n\n---\n📊 今日の質問残り回数: {remaining}回（{plan_name}プラン）"
             
             return response_with_info
             
@@ -419,6 +435,57 @@ class LineBotHandler:
             return message
         else:
             return "🔄 現在復習が必要なコンテンツはありません。"
+    
+    def handle_premium_upgrade(self, user_id):
+        """プレミアムアップグレードを処理"""
+        subscription = self.db.get_user_subscription(user_id)
+        
+        if subscription['plan_type'] == 'premium' and subscription['status'] == 'active':
+            return "✅ 既にプレミアムプランをご利用中です！\n\n💎 1日10回まで質問可能\n📚 すべての機能がご利用いただけます"
+        
+        # Stripe決済リンクを生成
+        payment_url = self.generate_stripe_payment_link(user_id)
+        
+        message = "💎 プレミアムプランのご案内\n\n"
+        message += "【特典】\n"
+        message += "🔸 AI質問回数: 3回 → 10回/日\n"
+        message += "🔸 月額: 480円（税込）\n"
+        message += "🔸 いつでもキャンセル可能\n\n"
+        message += "【決済方法】\n"
+        message += f"以下のリンクからお申し込みください：\n{payment_url}\n\n"
+        message += "※決済完了後、すぐにプレミアム機能がご利用いただけます"
+        
+        return message
+    
+    def get_plan_info(self, user_id):
+        """プラン情報を取得"""
+        subscription = self.db.get_user_subscription(user_id)
+        today = datetime.now().date()
+        daily_count = self.db.get_daily_question_count(user_id, today)
+        question_limit = self.db.get_question_limit_for_user(user_id)
+        
+        if subscription['plan_type'] == 'premium' and subscription['status'] == 'active':
+            expires_at = subscription['expires_at']
+            message = "💎 プレミアムプランご利用中\n\n"
+            message += f"📊 本日の質問回数: {daily_count}/{question_limit}回\n"
+            message += f"📅 有効期限: {expires_at}\n\n"
+            message += "プレミアムプランの特典:\n"
+            message += "🔸 AI質問回数: 10回/日\n"
+            message += "🔸 すべての機能が利用可能"
+        else:
+            message = "📝 無料プランご利用中\n\n"
+            message += f"📊 本日の質問回数: {daily_count}/{question_limit}回\n\n"
+            message += "💎 プレミアムプランにアップグレードしませんか？\n"
+            message += "🔸 AI質問回数: 3回 → 10回/日\n"
+            message += "🔸 月額: 480円（税込）\n\n"
+            message += "「プレミアム」と送信してお申し込み！"
+        
+        return message
+    
+    def generate_stripe_payment_link(self, user_id):
+        """Stripe決済リンクを生成"""
+        base_url = os.getenv('APP_URL', 'https://your-app.com')
+        return f"{base_url}/stripe/checkout?user_id={user_id}"
     
     def push_message(self, user_id, message):
         """プッシュメッセージを送信"""

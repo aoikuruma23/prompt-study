@@ -81,6 +81,23 @@ class LearningDatabase:
                 )
             ''')
             
+            # プレミアムサブスクリプションテーブル
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS premium_subscriptions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT,
+                    stripe_subscription_id TEXT UNIQUE,
+                    stripe_customer_id TEXT,
+                    plan_type TEXT DEFAULT 'free',
+                    status TEXT DEFAULT 'inactive',
+                    started_at TIMESTAMP,
+                    expires_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (user_id)
+                )
+            ''')
+            
             conn.commit()
     
     def add_user(self, user_id, level="beginner"):
@@ -362,4 +379,77 @@ class LearningDatabase:
                 
         except Exception as e:
             print(f"❌ 非アクティブユーザー取得エラー: {e}")
-            return [] 
+            return []
+    
+    def create_premium_subscription(self, user_id, stripe_subscription_id, stripe_customer_id):
+        """プレミアムサブスクリプションを作成"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                started_at = datetime.now()
+                expires_at = started_at + timedelta(days=30)
+                
+                cursor.execute('''
+                    INSERT OR REPLACE INTO premium_subscriptions 
+                    (user_id, stripe_subscription_id, stripe_customer_id, plan_type, status, started_at, expires_at, updated_at)
+                    VALUES (?, ?, ?, 'premium', 'active', ?, ?, CURRENT_TIMESTAMP)
+                ''', (user_id, stripe_subscription_id, stripe_customer_id, started_at, expires_at))
+                conn.commit()
+                print(f"✅ プレミアムサブスクリプション作成: {user_id}")
+                return True
+        except Exception as e:
+            print(f"❌ プレミアムサブスクリプション作成エラー: {e}")
+            return False
+    
+    def get_user_subscription(self, user_id):
+        """ユーザーのサブスクリプション状態を取得"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT plan_type, status, expires_at, stripe_subscription_id
+                    FROM premium_subscriptions 
+                    WHERE user_id = ? AND status = 'active' AND expires_at > CURRENT_TIMESTAMP
+                    ORDER BY created_at DESC LIMIT 1
+                ''', (user_id,))
+                result = cursor.fetchone()
+                
+                if result:
+                    return {
+                        'plan_type': result[0],
+                        'status': result[1],
+                        'expires_at': result[2],
+                        'stripe_subscription_id': result[3]
+                    }
+                else:
+                    return {
+                        'plan_type': 'free',
+                        'status': 'inactive',
+                        'expires_at': None,
+                        'stripe_subscription_id': None
+                    }
+        except Exception as e:
+            print(f"❌ サブスクリプション取得エラー: {e}")
+            return {'plan_type': 'free', 'status': 'inactive', 'expires_at': None, 'stripe_subscription_id': None}
+    
+    def cancel_premium_subscription(self, user_id, stripe_subscription_id):
+        """プレミアムサブスクリプションをキャンセル"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    UPDATE premium_subscriptions 
+                    SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = ? AND stripe_subscription_id = ?
+                ''', (user_id, stripe_subscription_id))
+                conn.commit()
+                print(f"✅ プレミアムサブスクリプションキャンセル: {user_id}")
+                return True
+        except Exception as e:
+            print(f"❌ プレミアムサブスクリプションキャンセルエラー: {e}")
+            return False
+    
+    def get_question_limit_for_user(self, user_id):
+        """ユーザーの1日の質問制限数を取得"""
+        subscription = self.get_user_subscription(user_id)
+        return 10 if subscription['plan_type'] == 'premium' and subscription['status'] == 'active' else 3 
