@@ -76,9 +76,10 @@ class LearningContentManager:
     def get_next_lesson(self, user_id):
         """ユーザーの次のレッスンを取得"""
         user_level = self.db.get_user_level(user_id)
-        recent_lessons = self.db.get_recent_lessons(user_id, days=7)
+        # 重複回避期間を30日に拡張（240レッスンなので約8ヶ月の重複回避）
+        recent_lessons = self.db.get_recent_lessons(user_id, days=30)
         recent_ids = [lesson[0] for lesson in recent_lessons]
-        
+
         # 復習アイテムを優先
         review_items = self.db.get_review_items(user_id, limit=3)
         if review_items:
@@ -86,13 +87,27 @@ class LearningContentManager:
             lesson = self.get_lesson_by_id(lesson_id)
             if lesson:
                 return lesson
-        
-        # 新しいレッスンを取得
+
+        # 新しいレッスンを取得（30日以内の重複を避ける）
         lesson = self.get_random_lesson(user_level, exclude_ids=recent_ids)
         if lesson:
             return lesson
-        
-        # 最近のレッスンがない場合は、同じレベルから再選択
+
+        # 30日以内で見つからない場合は14日以内の重複を避ける
+        recent_lessons_14d = self.db.get_recent_lessons(user_id, days=14)
+        recent_ids_14d = [lesson[0] for lesson in recent_lessons_14d]
+        lesson = self.get_random_lesson(user_level, exclude_ids=recent_ids_14d)
+        if lesson:
+            return lesson
+
+        # それでも見つからない場合は7日以内の重複を避ける
+        recent_lessons_7d = self.db.get_recent_lessons(user_id, days=7)
+        recent_ids_7d = [lesson[0] for lesson in recent_lessons_7d]
+        lesson = self.get_random_lesson(user_level, exclude_ids=recent_ids_7d)
+        if lesson:
+            return lesson
+
+        # 最後の手段：同じレベルから再選択
         return self.get_random_lesson(user_level)
     
     def format_lesson_message(self, lesson):
