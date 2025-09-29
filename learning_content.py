@@ -16,8 +16,8 @@ class LearningContentManager:
                 raw_data = json.load(f)
                 # 配列形式のデータをレベル別に分類
                 self.learning_data = {"beginner": [], "intermediate": [], "advanced": []}
-                
-                # すべてのレッスンをbeginnerレベルとして分類（簡易対応）
+
+                # レッスン番号に基づいてレベル分類
                 for lesson in raw_data:
                     # lesson_idを追加（lessonフィールドから生成）
                     if 'lesson' in lesson:
@@ -25,7 +25,7 @@ class LearningContentManager:
                     elif 'lesson_number' in lesson:
                         lesson['id'] = lesson['lesson_number']
                         lesson['lesson'] = lesson['lesson_number']
-                    
+
                     # contentフィールドを追加（point、description、summaryフィールドを使用）
                     if 'point' in lesson:
                         lesson['content'] = lesson['point']
@@ -33,19 +33,43 @@ class LearningContentManager:
                         lesson['content'] = lesson['description']
                     elif 'summary' in lesson:
                         lesson['content'] = lesson['summary']
-                    
-                    # levelフィールドを追加
-                    lesson['level'] = 'beginner'
-                    
-                    self.learning_data['beginner'].append(lesson)
-                    
+
+                    # レッスン番号からレベルを判定
+                    lesson_num = self.extract_lesson_number(lesson.get('lesson', ''))
+                    if lesson_num <= 80:
+                        lesson['level'] = 'beginner'
+                        self.learning_data['beginner'].append(lesson)
+                    elif lesson_num <= 160:
+                        lesson['level'] = 'intermediate'
+                        self.learning_data['intermediate'].append(lesson)
+                    else:
+                        lesson['level'] = 'advanced'
+                        self.learning_data['advanced'].append(lesson)
+
+                # レベル別データ数をログ出力
+                print(f"Learning data loaded successfully:")
+                print(f"   Beginner: {len(self.learning_data['beginner'])} lessons")
+                print(f"   Intermediate: {len(self.learning_data['intermediate'])} lessons")
+                print(f"   Advanced: {len(self.learning_data['advanced'])} lessons")
+
         except FileNotFoundError:
             print(f"学習データファイルが見つかりません: {self.learning_data_path}")
             self.learning_data = {"beginner": [], "intermediate": [], "advanced": []}
         except Exception as e:
             print(f"学習データ読み込みエラー: {e}")
             self.learning_data = {"beginner": [], "intermediate": [], "advanced": []}
-    
+
+    def extract_lesson_number(self, lesson_str):
+        """レッスン文字列から番号を抽出"""
+        import re
+        if not lesson_str:
+            return 0
+        # "Lesson 001", "Lesson 123"などから数字を抽出
+        match = re.search(r'(\d+)', lesson_str)
+        if match:
+            return int(match.group(1))
+        return 0
+
     def get_lesson_by_id(self, lesson_id):
         """IDでレッスンを取得"""
         for level in self.learning_data.values():
@@ -146,23 +170,34 @@ class LearningContentManager:
     
     def send_daily_lesson(self, user_id, line_bot):
         """毎日の学習メッセージを送信"""
-        lesson = self.get_next_lesson(user_id)
-        if not lesson:
-            return False
-        
-        message = self.format_lesson_message(lesson)
-        
-        # LINEにメッセージを送信
         try:
-            line_bot.push_message(user_id, message)
-            
+            print(f"🎯 レッスン取得中: {user_id}")
+            lesson = self.get_next_lesson(user_id)
+            if not lesson:
+                print(f"❌ レッスンが見つかりません: {user_id}")
+                return False
+
+            print(f"📝 レッスンをフォーマット中: {user_id}, レッスンID: {lesson.get('id', 'Unknown')}")
+            message = self.format_lesson_message(lesson)
+
+            # LINEにメッセージを送信
+            print(f"📤 LINEメッセージ送信中: {user_id}")
+            success = line_bot.push_message(user_id, message)
+            if not success:
+                print(f"❌ LINEメッセージ送信失敗: {user_id}")
+                return False
+
             # データベースに記録
             lesson_id = lesson.get('id') or lesson.get('lesson') or lesson.get('lesson_number')
+            print(f"💾 データベース記録中: {user_id}, レッスンID: {lesson_id}")
             self.db.record_lesson_sent(user_id, lesson_id, lesson.get('level', 'beginner'))
-            
+
+            print(f"✅ レッスン送信完了: {user_id}")
             return True
         except Exception as e:
-            print(f"メッセージ送信エラー: {e}")
+            print(f"❌ レッスン送信エラー: {user_id} - {e}")
+            import traceback
+            print(f"🔍 エラー詳細: {traceback.format_exc()}")
             return False
     
     def get_level_progress(self, user_id):

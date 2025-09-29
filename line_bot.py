@@ -496,7 +496,13 @@ class LineBotHandler:
             self.line_bot_api.push_message(user_id, TextSendMessage(text=message))
             return True
         except Exception as e:
-            print(f"プッシュメッセージ送信エラー: {e}")
+            print(f"❌ ユーザー {user_id} へのプッシュメッセージ送信エラー: {e}")
+            print(f"📝 エラータイプ: {type(e).__name__}")
+            # LINE APIエラーの詳細を出力
+            if hasattr(e, 'status_code'):
+                print(f"📊 ステータスコード: {e.status_code}")
+            if hasattr(e, 'error'):
+                print(f"📝 エラー詳細: {e.error}")
             return False
     
     def broadcast_message(self, message):

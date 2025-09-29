@@ -185,26 +185,46 @@ class LearningScheduler:
     def send_daily_lesson_to_all_users(self, intro_message=""):
         """全ユーザーに毎日の学習メッセージを送信"""
         users = self.get_active_users()
-        
-        for user_id in users:
+        print(f"📤 配信開始：{len(users)}人のユーザーに送信中...")
+
+        sent_count = 0
+        failed_count = 0
+
+        for i, user_id in enumerate(users, 1):
             try:
+                print(f"📨 ユーザー {i}/{len(users)}: {user_id} に送信中...")
+
                 # イントロメッセージを送信
                 if intro_message:
-                    self.line_bot.push_message(user_id, intro_message)
+                    intro_success = self.line_bot.push_message(user_id, intro_message)
+                    if intro_success:
+                        print(f"✅ イントロメッセージ送信成功: {user_id}")
+                    else:
+                        print(f"❌ イントロメッセージ送信失敗: {user_id}")
                     time.sleep(1)  # 少し待機
-                
+
                 # 学習コンテンツを送信
+                print(f"📚 学習コンテンツを送信中: {user_id}")
                 success = self.learning_manager.send_daily_lesson(user_id, self.line_bot)
-                
+
                 if success:
                     print(f"✅ ユーザー {user_id} に学習メッセージを送信しました")
+                    sent_count += 1
                 else:
                     print(f"❌ ユーザー {user_id} への学習メッセージ送信に失敗しました")
-                
+                    failed_count += 1
+
                 time.sleep(0.5)  # レート制限を避けるため少し待機
-                
+
             except Exception as e:
-                print(f"❌ ユーザー {user_id} への送信エラー: {e}")
+                print(f"❌ ユーザー {user_id} への送信で予期しないエラー: {e}")
+                print(f"📝 エラータイプ: {type(e).__name__}")
+                import traceback
+                print(f"🔍 エラー詳細: {traceback.format_exc()}")
+                failed_count += 1
+                continue
+
+        print(f"📊 配信完了 - 成功: {sent_count}人, 失敗: {failed_count}人")
     
     def send_quiz_to_all_users(self):
         """全ユーザーに週間クイズを送信"""
