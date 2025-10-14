@@ -101,21 +101,29 @@ class QuizManager:
         else:
             message = f"❌ 不正解です。\n正解は {quiz['correct_answer'] + 1} でした。\n\n"
         message += f"💡 解説：\n{quiz['explanation']}"
-        # 昇格判定：10回正解でレベルアップ
-        stats = self.db.get_quiz_statistics(user_id, days=365)
-        if stats and is_correct:
-            total_quizzes, correct_answers, _ = stats
+        # 昇格判定：各レベルで10回正解でレベルアップ
+        if is_correct:
             user_level = self.db.get_user_level(user_id)
-            if user_level == "beginner" and correct_answers >= 10:
-                self.db.update_user_level(user_id, "intermediate")
-                message += f"\n\n🎉 おめでとうございます！{correct_answers}回正解達成で中級レベルに昇格しました！"
-                if line_bot:
-                    line_bot.push_message(user_id, f"🎉 おめでとうございます！{correct_answers}回正解達成で中級レベルに昇格しました！")
-            elif user_level == "intermediate" and correct_answers >= 10:
-                self.db.update_user_level(user_id, "advanced")
-                message += f"\n\n🎉 素晴らしい！{correct_answers}回正解達成で上級レベルに昇格しました！"
-                if line_bot:
-                    line_bot.push_message(user_id, f"🎉 素晴らしい！{correct_answers}回正解達成で上級レベルに昇格しました！")
+            if user_level == "beginner":
+                # 初級クイズ（bqで始まる）の正解数をチェック
+                stats = self.db.get_quiz_statistics_by_level(user_id, 'bq', days=365)
+                if stats:
+                    total_quizzes, correct_answers, _ = stats
+                    if correct_answers >= 10:
+                        self.db.update_user_level(user_id, "intermediate")
+                        message += f"\n\n🎉 おめでとうございます！初級テスト{correct_answers}回正解達成で中級レベルに昇格しました！"
+                        if line_bot:
+                            line_bot.push_message(user_id, f"🎉 おめでとうございます！初級テスト{correct_answers}回正解達成で中級レベルに昇格しました！")
+            elif user_level == "intermediate":
+                # 中級クイズ（iqで始まる）の正解数をチェック
+                stats = self.db.get_quiz_statistics_by_level(user_id, 'iq', days=365)
+                if stats:
+                    total_quizzes, correct_answers, _ = stats
+                    if correct_answers >= 10:
+                        self.db.update_user_level(user_id, "advanced")
+                        message += f"\n\n🎉 素晴らしい！中級テスト{correct_answers}回正解達成で上級レベルに昇格しました！"
+                        if line_bot:
+                            line_bot.push_message(user_id, f"🎉 素晴らしい！中級テスト{correct_answers}回正解達成で上級レベルに昇格しました！")
         return message
     
     def get_quiz_statistics_message(self, user_id):

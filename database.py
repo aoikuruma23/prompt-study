@@ -177,14 +177,39 @@ class LearningDatabase:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                SELECT 
+                SELECT
                     COUNT(*) as total_quizzes,
                     SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers,
                     AVG(CASE WHEN is_correct THEN 1.0 ELSE 0.0 END) * 100 as accuracy
-                FROM quiz_results 
-                WHERE user_id = ? 
+                FROM quiz_results
+                WHERE user_id = ?
                 AND answered_at >= datetime('now', '-{} days')
             '''.format(days), (user_id,))
+            return cursor.fetchone()
+
+    def get_quiz_statistics_by_level(self, user_id, level_prefix, days=365):
+        """特定レベルのテスト統計を取得
+
+        Args:
+            user_id: ユーザーID
+            level_prefix: クイズIDのプレフィックス（'bq'=初級, 'iq'=中級, 'aq'=上級）
+            days: 集計期間（日数）
+
+        Returns:
+            (total_quizzes, correct_answers, accuracy) のタプル
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT
+                    COUNT(*) as total_quizzes,
+                    SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_answers,
+                    AVG(CASE WHEN is_correct THEN 1.0 ELSE 0.0 END) * 100 as accuracy
+                FROM quiz_results
+                WHERE user_id = ?
+                AND quiz_id LIKE ?
+                AND answered_at >= datetime('now', '-{} days')
+            '''.format(days), (user_id, level_prefix + '%'))
             return cursor.fetchone()
     
     def add_to_review_queue(self, user_id, lesson_id, level, reason, priority=1):

@@ -819,7 +819,7 @@ def admin_check_user(user_id):
         db = LearningDatabase()
         subscription = db.get_user_subscription(user_id)
         question_limit = db.get_question_limit_for_user(user_id)
-        
+
         return {
             "user_id": user_id,
             "plan_type": subscription['plan_type'],
@@ -827,6 +827,143 @@ def admin_check_user(user_id):
             "expires_at": subscription['expires_at'],
             "question_limit": question_limit
         }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
+
+@app.route('/admin/list_users')
+def admin_list_users():
+    """管理者用：全ユーザーのレベル一覧を表示"""
+    try:
+        import sqlite3
+        db = LearningDatabase()
+
+        with sqlite3.connect(db.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT user_id, level, created_at, last_activity FROM users ORDER BY level, user_id')
+            all_users = cursor.fetchall()
+
+        html = """
+        <!DOCTYPE html>
+        <html lang="ja">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>ユーザー一覧 - 管理画面</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }
+                .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                h1 { color: #00B900; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                th { background-color: #00B900; color: white; }
+                .beginner { background-color: #e8f5e9; }
+                .intermediate { background-color: #fff3e0; }
+                .advanced { background-color: #ffebee; }
+                .btn { display: inline-block; padding: 10px 20px; background: #00B900; color: white;
+                       text-decoration: none; border-radius: 5px; margin-top: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>📊 ユーザー一覧</h1>
+                <p>登録ユーザー数: """ + str(len(all_users)) + """名</p>
+
+                <table>
+                    <tr>
+                        <th>ユーザーID</th>
+                        <th>レベル</th>
+                        <th>作成日</th>
+                        <th>最終アクティビティ</th>
+                    </tr>
+        """
+
+        for user_id, level, created_at, last_activity in all_users:
+            level_class = level
+            level_display = {
+                'beginner': '🟢 初級',
+                'intermediate': '🟡 中級',
+                'advanced': '🔴 上級'
+            }.get(level, level)
+
+            html += f"""
+                    <tr class="{level_class}">
+                        <td>{user_id}</td>
+                        <td>{level_display}</td>
+                        <td>{created_at}</td>
+                        <td>{last_activity}</td>
+                    </tr>
+            """
+
+        html += """
+                </table>
+
+                <a href="/admin/downgrade_advanced_users" class="btn">上級者を中級にダウングレード</a>
+            </div>
+        </body>
+        </html>
+        """
+
+        return html
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
+
+@app.route('/admin/downgrade_advanced_users')
+def admin_downgrade_advanced_users():
+    """管理者用：上級者を中級にダウングレード"""
+    try:
+        import sqlite3
+        db = LearningDatabase()
+
+        # 上級者を取得
+        with sqlite3.connect(db.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT user_id FROM users WHERE level = ?', ('advanced',))
+            advanced_users = [row[0] for row in cursor.fetchall()]
+
+        if not advanced_users:
+            return {
+                "status": "success",
+                "message": "上級者が見つかりませんでした",
+                "downgraded_count": 0
+            }
+
+        # ダウングレード実行
+        downgraded_users = []
+        for user_id in advanced_users:
+            db.update_user_level(user_id, 'intermediate')
+            downgraded_users.append(user_id)
+
+        return {
+            "status": "success",
+            "message": f"{len(downgraded_users)}名の上級者を中級にダウングレードしました",
+            "downgraded_count": len(downgraded_users),
+            "downgraded_users": downgraded_users
+        }
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
+
+@app.route('/admin/downgrade_user/<user_id>')
+def admin_downgrade_user(user_id):
+    """管理者用：特定ユーザーを中級にダウングレード"""
+    try:
+        db = LearningDatabase()
+        current_level = db.get_user_level(user_id)
+
+        if current_level is None:
+            return {"status": "error", "message": "ユーザーが見つかりません"}, 404
+
+        db.update_user_level(user_id, 'intermediate')
+
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "old_level": current_level,
+            "new_level": "intermediate",
+            "message": f"ユーザー {user_id} を {current_level} から intermediate にダウングレードしました"
+        }
+
     except Exception as e:
         return {"status": "error", "message": str(e)}, 500
 
