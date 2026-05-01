@@ -91,19 +91,19 @@ class LearningScheduler:
         """朝の学習メッセージを送信"""
         print(f"🌅 朝の学習メッセージを送信中... ({datetime.now()})")
         print(f"🌅 アクティブユーザー数: {len(self.get_active_users())}")
-        self.send_daily_lesson_to_all_users("🌅 おはようございます！今日もプロンプトエンジニアリングを学びましょう！")
+        self.send_daily_lesson_to_all_users()
     
     def send_afternoon_lesson(self):
         """午後の学習メッセージを送信"""
         print(f"☀️ 午後の学習メッセージを送信中... ({datetime.now()})")
         print(f"☀️ アクティブユーザー数: {len(self.get_active_users())}")
-        self.send_daily_lesson_to_all_users("☀️ 午後の学習時間です！集中してスキルアップしましょう！")
+        self.send_daily_lesson_to_all_users()
     
     def send_evening_lesson(self):
         """夜の学習メッセージを送信"""
         print(f"🌙 夜の学習メッセージを送信中... ({datetime.now()})")
         print(f"🌙 アクティブユーザー数: {len(self.get_active_users())}")
-        self.send_daily_lesson_to_all_users("🌙 夜の学習時間です！今日の復習をしましょう！")
+        self.send_daily_lesson_to_all_users()
     
     def send_weekly_quiz(self):
         """週間クイズを送信"""
